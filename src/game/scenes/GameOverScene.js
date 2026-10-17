@@ -62,7 +62,8 @@ export default class GameOverScene extends Phaser.Scene {
     this.readyAt = this.game.getTime() + 800
 
     if (this.registry.get('autoplay')) {
-      console.info('[duo] run over', JSON.stringify({ won: this.won, waves, served: RunState.served, angry: RunState.angry, tips: RunState.tips, mods: [...RunState.modifiers] }))
+      const game = this.scene.get('GameScene')
+      console.info('[duo] run over', JSON.stringify({ won: this.won, waves, served: RunState.served, angry: RunState.angry, tips: RunState.tips, lastWave: game && game.waveStats, mods: [...RunState.modifiers], pets: RunState.pets }))
       this.time.delayedCall(4000, () => this.scene.start('LobbyScene'))
     }
   }

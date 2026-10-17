@@ -25,7 +25,7 @@ import { floatText, shake, banner } from '@/game/ui/fx'
 import RunState from '@/game/state/RunState'
 import bus from '@/game/state/bus'
 import { initSfx, sfx } from '@/game/audio/sfx'
-import { playMusic, duckMusic } from '@/game/audio/music'
+import { playMusic, duckMusic, setMusicIntensity } from '@/game/audio/music'
 import AnyInput from '@/game/input/AnyInput'
 
 const CRATES = { B: 'bun', P: 'patty', L: 'lettuce', M: 'tomato' }
@@ -86,6 +86,11 @@ export default class GameScene extends Phaser.Scene {
       fontFamily: FONT, fontSize: '8px', color: '#8a8399'
     }).setOrigin(0.5).setDepth(9100)
     this.overlay = new PauseOverlay(this)
+    // Prep countdown before the doors open, over the dining room.
+    this.prepText = this.add.text(432, MAP_TOP + 14, '', {
+      fontFamily: FONT, fontSize: '8px', color: '#ffd93d', backgroundColor: '#120f1add', padding: { x: 4, y: 3 }
+    }).setOrigin(0.5).setDepth(9700).setVisible(false)
+    this.prepLeft = 0
 
     if (this.input.gamepad) {
       this.input.gamepad.on('down', this.onPadDown, this)
@@ -195,9 +200,15 @@ export default class GameScene extends Phaser.Scene {
     this.waveCfg = cfg
     this.spawned = 0
     this.waveServed = 0
-    this.waveStats = { served: 0, perfect: 0, angry: 0 }
+    // angryBy: where walkouts happened (queued / following / ready / waiting) for balance logs.
+    this.waveStats = { served: 0, perfect: 0, angry: 0, angryBy: {} }
     this.criticsLeft = cfg.critics || 0
-    this.spawnTimer = 2.5
+    // PlateUp-style prep: a few calm seconds to pre-chop and pre-grill.
+    this.prepLeft = n === 1 ? TUNING.firstPrepTime : TUNING.prepTime
+    this.spawnTimer = this.prepLeft + 0.5
+    this.lastCalled = false
+    this.chain = null
+    setMusicIntensity(1)
     this.waveActive = true
     this.tables.forEach((t, i) => t.setOpen(t.open || i < cfg.tables))
     banner(this, cfg.endless ? 'CLOSING TIME' : `WAVE ${n}`, `${cfg.name} - ${cfg.tag}`)
@@ -222,6 +233,12 @@ export default class GameScene extends Phaser.Scene {
     const group = cfg.group || 1
     for (let i = 0; i < group && this.spawned < cfg.customers && this.queue.length < this.queueSpots.length; i++) {
       this.spawnCustomer(cfg, i)
+    }
+    // Final stretch: call it out and pick up the tempo.
+    if (!cfg.endless && !this.lastCalled && this.spawned >= cfg.customers) {
+      this.lastCalled = true
+      floatText(this, 432, MAP_TOP + 40, 'LAST GUESTS!', '#ff3b8d')
+      setMusicIntensity(1.12)
     }
     this.spawnTimer = cfg.spawnEvery * RunState.diff.spawn / this.difficulty
   }
@@ -275,10 +292,11 @@ export default class GameScene extends Phaser.Scene {
     RunState.wavesCleared = n
     RunState.calm = false
     if (this.registry.get('autoplay')) {
-      console.info('[duo] wave cleared', n, JSON.stringify({ served: RunState.served, angry: RunState.angry, lives: RunState.lives, tips: RunState.tips, mods: [...RunState.modifiers] }))
+      console.info('[duo] wave cleared', n, JSON.stringify({ served: RunState.served, angry: RunState.angry, lives: RunState.lives, tips: RunState.tips, wave: this.waveStats, streak: RunState.streak, mods: [...RunState.modifiers], pets: RunState.pets }))
     }
     bus.emit('wave_cleared', { wave: n })
     sfx('wave')
+    setMusicIntensity(1)
     const { stars, bonus } = this.rateWave(n)
     RunState.tips += bonus
     RunState.stars += stars
@@ -396,7 +414,21 @@ export default class GameScene extends Phaser.Scene {
     return true
   }
 
+  // Diner Dash-style chain: the same Server action back to back pays a bit
+  // extra (seat, seat, seat...). Rewards batching instead of zig-zagging.
+  chainAction (type, x, y) {
+    if (this.chain && this.chain.type === type) this.chain.count++
+    else this.chain = { type, count: 1 }
+    const n = this.chain.count
+    if (n < 2) return
+    const bonus = TUNING.chainBonus * Math.min(n - 1, 4)
+    RunState.tips += bonus
+    this.hud.bumpTips()
+    this.time.delayedCall(300, () => floatText(this, x, y - 70, `${type.toUpperCase()} CHAIN x${n} +$${bonus}`, '#b06ef7'))
+  }
+
   seat (c, table) {
+    this.chainAction('seat', table.x, table.y)
     this.leading = null
     table.customer = c
     c.table = table
@@ -412,6 +444,7 @@ export default class GameScene extends Phaser.Scene {
   takeOrder (c) {
     const order = { id: ++this.orderId, table: c.table.number, recipe: c.order, customer: c }
     c.ticket = order
+    this.chainAction('order', c.pos.x, c.pos.y)
     c.setState('waiting')
     c.resetPatience(RunState.patienceMult() * TUNING.foodPatienceMult)
     bus.emit('order_taken', { order })
@@ -443,7 +476,8 @@ export default class GameScene extends Phaser.Scene {
     RunState.bestStreak = Math.max(RunState.bestStreak, RunState.streak)
     const speed = TUNING.speedTip * ratio
     const octo = both ? TUNING.octoBonus : 0
-    const bonus = quality === 'PERFECT' ? TUNING.perfectBonus : quality === 'CLUTCH' ? TUNING.clutchBonus : 0
+    const chef = served.quality || 0
+    const bonus = (quality === 'PERFECT' ? TUNING.perfectBonus : quality === 'CLUTCH' ? TUNING.clutchBonus : 0) + chef * TUNING.chefBonus
     const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * c.guest.tip * RunState.streakMult() * this.petTip(c)) + octo + bonus
     RunState.tips += tip
     RunState.served++
@@ -458,6 +492,10 @@ export default class GameScene extends Phaser.Scene {
     if (quality) {
       this.time.delayedCall(220, () => floatText(this, c.pos.x, c.pos.y - 52, `${quality}!`, quality === 'PERFECT' ? '#00ffd0' : '#ff3b8d'))
     }
+    if (chef) {
+      this.time.delayedCall(660, () => floatText(this, c.pos.x, c.pos.y - 76, `CHEF'S KISS +$${chef * TUNING.chefBonus}`, '#ffd93d'))
+    }
+    this.chainAction('serve', c.pos.x, c.pos.y - 12)
     if ([3, 5, 10, 15, 20].includes(RunState.streak)) {
       this.time.delayedCall(440, () => floatText(this, c.pos.x, c.pos.y - 64, `${RunState.streak} STREAK!`, '#f79a3e'))
     }
@@ -497,12 +535,16 @@ export default class GameScene extends Phaser.Scene {
       path = [{ x: this.queueSpots[0].x, y: this.entrance.y }, exit]
     }
 
+    const angryFrom = c.state
     c.setState('leaving')
     if (angry) {
       c.setAngry()
       RunState.lives--
       RunState.angry++
-      if (this.waveStats) this.waveStats.angry++
+      if (this.waveStats) {
+        this.waveStats.angry++
+        this.waveStats.angryBy[angryFrom] = (this.waveStats.angryBy[angryFrom] || 0) + 1
+      }
       if (RunState.streak >= 3) floatText(this, c.pos.x, c.pos.y - 52, 'STREAK RESET', '#8a8399')
       RunState.streak = 0
       bus.emit('customer_left_angry', { customer: c })
@@ -690,6 +732,18 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  updatePrep (dt) {
+    if (this.prepLeft <= 0) return
+    this.prepLeft -= dt
+    if (this.prepLeft <= 0) {
+      this.prepText.setVisible(false)
+      floatText(this, 432, MAP_TOP + 30, 'DOORS OPEN!', '#7ed957')
+      sfx('ding')
+      return
+    }
+    this.prepText.setText(`PREP TIME - DOORS OPEN IN ${Math.ceil(this.prepLeft)}`).setVisible(true)
+  }
+
   updateHint (fires) {
     if (fires) {
       const blink = Math.floor(this.time.now / 300) % 2 === 0
@@ -844,8 +898,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.updateModifiers(dt)
     this.checkWaveCleared()
-    this.hud.update()
+    const cfg = this.waveCfg
+    this.hud.update(cfg && !cfg.endless && this.waveStats ? (this.waveStats.served + this.waveStats.angry) / cfg.customers : null)
     this.updateHint(fires)
+    this.updatePrep(dt)
     this.rail.update()
   }
 }

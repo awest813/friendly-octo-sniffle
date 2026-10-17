@@ -36,6 +36,7 @@ let timer = null
 let step = 0
 let nextTime = 0
 let ducked = false
+let intensity = 1
 
 function applyVolume () {
   if (!out) return
@@ -96,7 +97,7 @@ function playStep (track, s, t, stepLen) {
 
 function schedule () {
   if (!current || ctx.state !== 'running') return
-  const stepLen = 60 / current.bpm / 4
+  const stepLen = 60 / (current.bpm * intensity) / 4
   if (nextTime < ctx.currentTime) nextTime = ctx.currentTime + 0.02
   while (nextTime < ctx.currentTime + LOOKAHEAD) {
     if (Settings.music > 0) playStep(current, step, nextTime, stepLen)
@@ -108,9 +109,15 @@ function schedule () {
 export function playMusic (name) {
   if (!ctx || current === TRACKS[name]) return
   current = TRACKS[name]
+  intensity = 1
   step = 0
   nextTime = ctx.currentTime + 0.05
   if (!timer) timer = setInterval(schedule, 25)
+}
+
+// Speeds the loop up for the final stretch of a wave (1 = normal).
+export function setMusicIntensity (value) {
+  intensity = value
 }
 
 export function stopMusic () {

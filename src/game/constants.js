@@ -54,7 +54,16 @@ export const TUNING = {
   perfectAt: 0.7,
   clutchBelow: 0.15,
   perfectBonus: 2,
-  clutchBonus: 3
+  clutchBonus: 3,
+  prepTime: 8,
+  firstPrepTime: 10,
+  searWindow: 1.5,
+  rhythmPeriod: 0.8,
+  rhythmZone: 0.22,
+  rhythmBoost: 0.4,
+  perfectChopTaps: 2,
+  chefBonus: 2,
+  chainBonus: 1
 }
 
 // Between-wave shop. Prices go up 20% with Bigger Tips.

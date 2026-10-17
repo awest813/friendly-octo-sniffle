@@ -30,6 +30,8 @@ export function addToPlate (plateItem, ing) {
   if (!isCleanPlate(plateItem) || !isPlateReady(ing)) return false
   if (!canAddToPlate(plateItem.contents, ing.id)) return false
   plateItem.contents.push(ing.id)
+  // Perfectly prepared parts (rhythm chop, perfect sear) raise the dish's quality.
+  if (ing.perfect) plateItem.quality = (plateItem.quality || 0) + 1
   return true
 }
 
@@ -61,6 +63,7 @@ export class ItemView extends Phaser.GameObjects.Container {
     if (!item) return this
     if (item.type === 'ing') {
       this.add(this.scene.add.image(0, 0, ingredientTexture(item.id, item.state)))
+      if (item.perfect) this.add(this.scene.add.image(7, -7, 'star').setScale(0.5))
       return this
     }
     if (item.type === 'tool') {
@@ -68,6 +71,7 @@ export class ItemView extends Phaser.GameObjects.Container {
       return this
     }
     this.add(this.scene.add.image(0, 0, item.dirty ? 'plate_dirty' : 'plate'))
+    if (item.quality) this.add(this.scene.add.image(9, -12, 'star').setScale(0.5))
     const dish = plateDish(item)
     if (dish) {
       this.add(this.scene.add.image(0, -6, RECIPES[dish].icon))

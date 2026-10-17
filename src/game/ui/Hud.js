@@ -13,6 +13,7 @@ export default class Hud {
       this.hearts.push(scene.add.image(13 + i * 18, 27, 'heart').setDepth(9100))
     }
     this.tips = scene.add.text(134, 22, '', { fontFamily: FONT, fontSize: '8px', color: '#ffd93d' }).setOrigin(1, 0).setDepth(9100)
+    this.progress = scene.add.graphics().setDepth(9100)
     this.streak = scene.add.text(134, 5, '', { fontFamily: FONT, fontSize: '8px', color: '#f79a3e' }).setOrigin(1, 0).setDepth(9100)
     this.mods = []
   }
@@ -21,7 +22,13 @@ export default class Hud {
     this.scene.tweens.add({ targets: this.streak, scale: { from: 1.6, to: 1 }, duration: 240, ease: 'Back.easeOut' })
   }
 
-  update () {
+  // progress: share of this wave's guests already resolved (null = hide).
+  update (progress = null) {
+    this.progress.clear()
+    if (progress !== null) {
+      this.progress.fillStyle(0x3a3150, 1).fillRect(6, 16, 128, 3)
+      this.progress.fillStyle(0x00ffd0, 1).fillRect(6, 16, Math.round(128 * Math.min(1, progress)), 3)
+    }
     const w = RunState.wave
     this.wave.setText(w > WIN_WAVE ? 'CLOSING' : `WAVE ${w}/${WIN_WAVE}`)
     // Streak multiplier: visible whenever it's doing something for you.

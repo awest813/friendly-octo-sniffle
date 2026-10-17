@@ -6,6 +6,7 @@ import {
 } from '@/game/entities/items'
 import RunState from '@/game/state/RunState'
 import { sfx } from '@/game/audio/sfx'
+import { floatText } from '@/game/ui/fx'
 
 // Would combine() succeed? Same rules, no mutation (for button prompts).
 function canCombine (held, here) {
@@ -110,7 +111,10 @@ export class Station {
     const held = player.item
     const here = this.item
     if (!held && here) return '{A} PICK UP'
-    if (held && !here) return this.accepts(held) ? '{A} PUT DOWN' : null
+    if (held && !here) {
+      if (!this.accepts(held)) return null
+      return this.isPass && isDirtyPlate(held) ? '{A} SEND TO KITCHEN' : '{A} PUT DOWN'
+    }
     if (held && here) {
       if (canCombine(held, here)) return '{A} ADD TO PLATE'
       if (player.canStack(here)) return '{A} STACK PLATE'
@@ -175,11 +179,16 @@ export class Hook extends Station {
   }
 }
 
+// Hold X to chop at a steady pace. Or play the rhythm game: tap X as the
+// marker crosses the green zone for big chop jumps; two good taps make a
+// PERFECT CHOP (a quality bonus on the finished dish).
 export class Board extends Station {
   constructor (scene, tx, ty) {
     super(scene, tx, ty, 'board')
     this.progress = 0
     this.chopSound = 0
+    this.nice = 0
+    this.rhythm = scene.add.graphics().setDepth(8600)
     this.hint = scene.add.text(this.x, this.y - 22, 'X', {
       fontFamily: FONT, fontSize: '8px', color: '#1a1423', backgroundColor: '#00ffd0', padding: { x: 2, y: 1 }
     }).setOrigin(0.5).setDepth(8600).setVisible(false)
@@ -190,30 +199,54 @@ export class Board extends Station {
     return !!it && it.type === 'ing' && INGREDIENTS[it.id].chop && it.state === 'raw'
   }
 
+  // Marker position 0..1, sweeping left to right.
+  get marker () {
+    return (this.scene.time.now / 1000 / TUNING.rhythmPeriod) % 1
+  }
+
+  get inZone () {
+    const m = this.marker
+    return m > 0.68 && m < 0.68 + TUNING.rhythmZone
+  }
+
   onPlaced () {
     this.progress = 0
+    this.nice = 0
     if (this.choppable && RunState.has('chopper')) this.finishChop()
   }
 
   onTaken () {
     this.progress = 0
+    this.nice = 0
   }
 
   finishChop () {
     this.item.state = 'chopped'
+    if (this.nice >= TUNING.perfectChopTaps) {
+      this.item.perfect = true
+      floatText(this.scene, this.x, this.y - 30, 'PERFECT CHOP!', '#00ffd0')
+      sfx('star', 1)
+    }
     this.refreshItem()
     this.progress = 0
+    this.nice = 0
     sfx('chopDone')
   }
 
   prompt (player) {
-    if (!player.item && this.choppable) return '{X} HOLD TO CHOP'
+    if (!player.item && this.choppable) return '{X} CHOP (TAP ON GREEN!)'
     return super.prompt(player)
   }
 
   use (player, dt) {
     if (player.item || !this.choppable) return false
     this.progress += dt
+    if (player.input.pressed('use') && this.inZone) {
+      this.progress += TUNING.rhythmBoost * TUNING.chopTime
+      this.nice++
+      floatText(this.scene, this.x + 10, this.y - 26, 'NICE!', '#7ed957')
+      sfx('select')
+    }
     this.chopSound -= dt
     if (this.chopSound <= 0) {
       sfx('chop')
@@ -225,8 +258,26 @@ export class Board extends Station {
   }
 
   update () {
-    this.hint.setVisible(this.choppable && Math.floor(this.scene.time.now / 400) % 2 === 0)
+    this.hint.setVisible(false)
     this.drawBar(this.progress > 0 ? this.progress / TUNING.chopTime : null, 0x00ffd0)
+    // Show the rhythm track while a human is lined up to chop.
+    const human = this.scene.players.some(p => p.target === this && p.input.keys && !p.item)
+    this.rhythm.clear()
+    if (!human || !this.choppable) return
+    const w = 30
+    const x0 = this.x - w / 2
+    // Below the board, clear of the button prompt above it.
+    const y = this.y + 21
+    this.rhythm.fillStyle(0x1a1423, 1).fillRect(x0 - 1, y - 1, w + 2, 6)
+    this.rhythm.fillStyle(0x3a3150, 1).fillRect(x0, y, w, 4)
+    this.rhythm.fillStyle(0x7ed957, 1).fillRect(x0 + w * 0.68, y, w * TUNING.rhythmZone, 4)
+    this.rhythm.fillStyle(0xffffff, 1).fillRect(x0 + w * this.marker - 1, y - 2, 2, 8)
+  }
+
+  destroy () {
+    super.destroy()
+    this.rhythm.destroy()
+    this.hint.destroy()
   }
 }
 
@@ -262,9 +313,25 @@ export class Grill extends Station {
     return !this.onFire && item.type === 'ing' && item.id === 'patty' && item.state !== 'burnt'
   }
 
+  // The golden window just after a patty cooks: take it now for a perfect sear.
+  get searing () {
+    const it = this.item
+    return !!it && it.id === 'patty' && it.state === 'cooked' &&
+      this.timer - TUNING.grillCookTime <= TUNING.searWindow
+  }
+
   interact (player) {
     if (this.onFire) return false
-    return super.interact(player)
+    const perfect = this.searing
+    if (perfect) this.item.perfect = true
+    const before = this.item
+    const ok = super.interact(player)
+    if (perfect && (!ok || this.item === before)) delete before.perfect
+    else if (perfect) {
+      floatText(this.scene, this.x, this.y - 30, 'PERFECT SEAR!', '#ffd93d')
+      sfx('star', 2)
+    }
+    return ok
   }
 
   receive (item) {
@@ -287,6 +354,7 @@ export class Grill extends Station {
     if (this.onFire) return isTool(held, 'extinguisher') ? '{X} HOLD TO SPRAY' : 'FIRE! GET THE EXTINGUISHER'
     if (held && !this.item && this.accepts(held)) return '{A} GRILL IT'
     if (!held && this.item && this.item.state === 'raw') return 'COOKING...'
+    if (this.searing && (!held || isCleanPlate(held))) return '{A} PERFECT SEAR - NOW!'
     if (!held && this.item && this.item.state === 'burnt') return '{A} TAKE BURNT PATTY'
     return super.prompt(player)
   }
@@ -352,6 +420,9 @@ export class Grill extends Station {
 
     if (it.state === 'raw') {
       this.drawBar(this.timer / cook, 0xf79a3e)
+    } else if (this.searing) {
+      const blink = Math.floor(this.scene.time.now / 120) % 2 === 0
+      this.drawBar(1, blink ? 0xffd93d : 0xffffff)
     } else if (it.state === 'cooked' && !RunState.has('ghost')) {
       const r = (this.timer - cook) / burn
       const blink = r > 0.5 && Math.floor(this.scene.time.now / 150) % 2 === 0
@@ -549,6 +620,7 @@ export class Bin extends Station {
     }
     if (isCleanPlate(held) && held.contents.length) {
       held.contents = []
+      held.quality = 0
       player.refreshItem()
       sfx('drop')
       return true
@@ -613,6 +685,7 @@ export class Table extends Station {
   interact (player) {
     const scene = this.scene
     if (this.dirty && (!player.item || player.canStack(plate(true)))) {
+      scene.chainAction('bus', this.x, this.y)
       this.setDirty(false)
       if (player.item) player.stack(plate(true))
       else player.setItem(plate(true))
