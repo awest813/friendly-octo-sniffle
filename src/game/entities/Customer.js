@@ -29,7 +29,8 @@ export default class Customer {
     this.walkTime = 0
 
     this.shadow = scene.add.image(x, y, 'shadow')
-    this.sprite = scene.add.image(x, y, guest.texture || texture).setOrigin(0.5, 1).setScale(guest.scale || 1)
+    this.baseTexture = guest.texture || texture
+    this.sprite = scene.add.image(x, y, this.baseTexture).setOrigin(0.5, 1).setScale(guest.scale || 1)
     this.bubble = scene.add.container(x, y)
     this.bubbleBg = scene.add.image(0, 0, 'bubble')
     this.bubbleIcon = scene.add.image(0, -1, RECIPES[order].icon)
@@ -105,6 +106,8 @@ export default class Customer {
           const cb = this.onArrive
           this.onArrive = null
           cb()
+          // Arriving at the exit destroys the guest; nothing left to draw.
+          if (this.destroyed) return false
         }
       }
     }
@@ -140,7 +143,16 @@ export default class Customer {
     const { x, y } = this.pos
     const walking = this.path.length || this.state === 'following'
     const bob = walking ? -Math.abs(Math.sin(this.walkTime)) * 2 : 0
-    this.sprite.setPosition(x, y + 5 + bob).setDepth(y)
+    // Walk cycle while moving; once seated, hide the legs behind the table.
+    const frame = walking && Math.sin(this.walkTime) > 0 ? `${this.baseTexture}_b` : this.baseTexture
+    if (this.sprite.texture.key !== frame) this.sprite.setTexture(frame)
+    const seated = !!this.table && !walking && (this.state === 'ready' || this.state === 'waiting' || this.state === 'eating')
+    if (seated !== this.seatedPose) {
+      this.seatedPose = seated
+      if (seated) this.sprite.setCrop(0, 0, 32, 23)
+      else this.sprite.setCrop()
+    }
+    this.sprite.setPosition(x, y + 5 + bob + (seated ? 4 : 0)).setDepth(y)
     this.shadow.setPosition(x, y + 4).setDepth(y - 1)
     this.bubble.setPosition(x + 10, y - 36).setDepth(8000 + y)
     if (this.crown) this.crown.setPosition(x, y - (this.guest.scale ? 22 : 27) + bob).setDepth(y + 1)
@@ -166,6 +178,7 @@ export default class Customer {
   }
 
   destroy () {
-    [this.shadow, this.sprite, this.bubble, this.bar, this.crown, this.sparkle].forEach(o => o && o.destroy())
+    this.destroyed = true
+    ;[this.shadow, this.sprite, this.bubble, this.bar, this.crown, this.sparkle].forEach(o => o && o.destroy())
   }
 }

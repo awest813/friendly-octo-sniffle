@@ -2,9 +2,13 @@ import { FONT } from '@/game/constants'
 import Settings from '@/game/state/settings'
 
 export function floatText (scene, x, y, text, color = '#ffd93d') {
+  // Keep pops inside the play area: they rise 22px, and the HUD bar is 40px.
+  y = Math.max(y, 72)
   const t = scene.add.text(x, y, text, {
     fontFamily: FONT, fontSize: '8px', color, stroke: '#1a1423', strokeThickness: 3
   }).setOrigin(0.5).setDepth(9500)
+  const half = t.width / 2
+  t.x = Math.max(half + 2, Math.min(scene.scale.width - half - 2, x))
   scene.tweens.add({
     targets: t, y: y - 22, alpha: { from: 1, to: 0 }, duration: 900, ease: 'Cubic.easeOut',
     onComplete: () => t.destroy()

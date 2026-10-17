@@ -18,6 +18,9 @@ export default class TicketRail {
     this.width = width
     this.tickets = []
     scene.add.rectangle(x, y + H / 2 + 1, width, 2, COLORS.panelEdge).setOrigin(0, 0.5).setDepth(9100)
+    this.empty = scene.add.text(x + 8, y + H / 2 + 1, 'ORDERS SHOW UP HERE', {
+      fontFamily: FONT, fontSize: '8px', color: '#3a3150', backgroundColor: '#120f1a', padding: { x: 4, y: 2 }
+    }).setOrigin(0, 0.5).setDepth(9101)
 
     this.onTaken = ({ order }) => this.add(order)
     this.onClosed = ({ order, served }) => this.remove(order, served)
@@ -72,6 +75,7 @@ export default class TicketRail {
   }
 
   update () {
+    this.empty.setVisible(this.tickets.length === 0)
     this.tickets.forEach(t => {
       const r = t.order.customer.ratio
       const color = r > 0.2 ? 0x7ed957 : 0xff4040

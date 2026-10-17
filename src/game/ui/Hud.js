@@ -13,9 +13,15 @@ export default class Hud {
       this.hearts.push(scene.add.image(13 + i * 18, 27, 'heart').setDepth(9100))
     }
     this.tips = scene.add.text(134, 22, '', { fontFamily: FONT, fontSize: '8px', color: '#ffd93d' }).setOrigin(1, 0).setDepth(9100)
+    this.coin = scene.add.image(0, 26, 'coin').setScale(1.5).setDepth(9100)
     this.progress = scene.add.graphics().setDepth(9100)
     this.streak = scene.add.text(134, 5, '', { fontFamily: FONT, fontSize: '8px', color: '#f79a3e' }).setOrigin(1, 0).setDepth(9100)
     this.mods = []
+  }
+
+  // Where flying tip coins land.
+  get coinTarget () {
+    return { x: this.coin.x, y: this.coin.y }
   }
 
   bumpStreak () {
@@ -35,6 +41,7 @@ export default class Hud {
     this.streak.setText(RunState.streak >= 2 ? `x${RunState.streakMult().toFixed(2)}` : '')
     this.hearts.forEach((h, i) => h.setTexture(i < RunState.lives ? 'heart' : 'heart_empty'))
     this.tips.setText(`$${RunState.tips}`)
+    this.coin.x = 134 - this.tips.width - 9
   }
 
   bumpTips () {

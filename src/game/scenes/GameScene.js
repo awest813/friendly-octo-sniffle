@@ -87,7 +87,7 @@ export default class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(9100)
     this.overlay = new PauseOverlay(this)
     // Prep countdown before the doors open, over the dining room.
-    this.prepText = this.add.text(432, MAP_TOP + 14, '', {
+    this.prepText = this.add.text(432, MAP_TOP + 34, '', {
       fontFamily: FONT, fontSize: '8px', color: '#ffd93d', backgroundColor: '#120f1add', padding: { x: 4, y: 3 }
     }).setOrigin(0.5).setDepth(9700).setVisible(false)
     this.prepLeft = 0
@@ -136,11 +136,13 @@ export default class GameScene extends Phaser.Scene {
       [...row].forEach((ch, tx) => {
         const c = tileCenter(tx, ty)
         if (ch === '#') {
-          this.add.image(c.x, c.y, 'wall').setDepth(c.y - 16)
+          this.add.image(c.x, c.y, this.wallTexture(tx, ty)).setDepth(c.y - 16)
           this.addSolid(c.x, c.y)
           return
         }
-        this.add.image(c.x, c.y, tx <= KITCHEN_MAX_COL ? 'floor_k' : 'floor_d').setDepth(0)
+        // Flipping wood planks at random breaks up the repeating pattern.
+        const kitchen = tx <= KITCHEN_MAX_COL
+        this.add.image(c.x, c.y, kitchen ? 'floor_k' : 'floor_d').setDepth(0).setFlipX(!kitchen && Math.random() < 0.5)
         if (CRATES[ch]) this.addStation(new Crate(this, tx, ty, CRATES[ch]))
         else if (ch === 'G') this.addStation(new Grill(this, tx, ty))
         else if (ch === 'g') this.spare = this.addStation(new Counter(this, tx, ty))
@@ -167,8 +169,43 @@ export default class GameScene extends Phaser.Scene {
       this.sink = this.addStation(new Sink(this, tx, ty, this.plateStack))
     })
     this.tables.forEach(t => t.setOpen(false))
+    this.addDecor()
     // Front of the queue is the spot nearest the entrance.
     this.queueSpots.sort((a, b) => b.y - a.y)
+  }
+
+  wallTexture (tx, ty) {
+    if (ty !== 0) return 'wall'
+    if ([9, 10, 16, 17].includes(tx)) return 'window'
+    if ([2, 4].includes(tx)) return 'utensils'
+    return 'wall'
+  }
+
+  // Purely visual: none of this is solid or interactive.
+  addDecor () {
+    const at = (tx, ty) => tileCenter(tx, ty)
+    ;[[8, 1], [18, 1]].forEach(([tx, ty]) => {
+      const c = at(tx, ty)
+      this.add.image(c.x, c.y - 4, 'plant').setDepth(c.y + 8)
+    })
+    const rug = at(18, 8)
+    this.add.image(rug.x, rug.y, 'rug').setDepth(1)
+    this.add.image(rug.x + TILE, rug.y, 'rug').setDepth(1)
+    // Neon sign over the dining room, with the odd flicker.
+    const sign = this.add.text(432, MAP_TOP + 14, 'DUO DINER', {
+      fontFamily: FONT, fontSize: '8px', color: '#ff3b8d', stroke: '#5a1030', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(200)
+    this.time.addEvent({
+      delay: 2600,
+      loop: true,
+      callback: () => {
+        if (Math.random() < 0.35) {
+          sign.setAlpha(0.35)
+          this.time.delayedCall(90, () => sign.setAlpha(1))
+        }
+      }
+    })
+    this.add.image(0, MAP_TOP, 'vignette').setOrigin(0).setDepth(7990)
   }
 
   // --- waves ---------------------------------------------------------------
@@ -414,6 +451,27 @@ export default class GameScene extends Phaser.Scene {
     return true
   }
 
+  // Tip coins arc from the guest to the tips counter.
+  coinBurst (x, y, count) {
+    const target = this.hud.coinTarget
+    for (let i = 0; i < count; i++) {
+      const coin = this.add.image(x + Phaser.Math.Between(-8, 8), y + Phaser.Math.Between(-6, 6), 'coin').setScale(2).setDepth(9550)
+      this.tweens.add({
+        targets: coin,
+        x: target.x,
+        y: target.y,
+        scale: 1.2,
+        delay: i * 55,
+        duration: 520,
+        ease: 'Cubic.easeIn',
+        onComplete: () => {
+          coin.destroy()
+          if (i === count - 1) this.hud.bumpTips()
+        }
+      })
+    }
+  }
+
   // Diner Dash-style chain: the same Server action back to back pays a bit
   // extra (seat, seat, seat...). Rewards batching instead of zig-zagging.
   chainAction (type, x, y) {
@@ -489,6 +547,7 @@ export default class GameScene extends Phaser.Scene {
     bus.emit('tip_earned', { amount: tip, x: c.pos.x, y: c.pos.y })
 
     floatText(this, c.pos.x, c.pos.y - 40, octo ? `+$${tip} OCTO!` : `+$${tip}`)
+    this.coinBurst(c.pos.x, c.pos.y - 30, Math.min(6, Math.ceil(tip / 4)))
     if (quality) {
       this.time.delayedCall(220, () => floatText(this, c.pos.x, c.pos.y - 52, `${quality}!`, quality === 'PERFECT' ? '#00ffd0' : '#ff3b8d'))
     }

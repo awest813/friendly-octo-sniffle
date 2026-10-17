@@ -60,8 +60,11 @@ const RunState = {
     return 1
   },
 
+  // Shop prices grow with the wave so the shop stays a real choice as tip
+  // income grows (soak runs earn ~$250 a wave by wave 6).
   price (base) {
-    return Math.round(base * (this.has('tips') ? 1.2 : 1))
+    const inflation = 1 + 0.35 * Math.max(0, this.wave - 2)
+    return Math.round(base * inflation * (this.has('tips') ? 1.2 : 1))
   },
 
   spend (amount) {

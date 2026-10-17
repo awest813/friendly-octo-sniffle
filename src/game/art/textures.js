@@ -115,6 +115,9 @@ function buildTiles (scene) {
     px(2, 3, 12, 8, '#b07a48')
     px(2, 3, 12, 2, '#c9945a')
     px(2, 11, 12, 1, '#7a5228')
+    // Checked diner tablecloth runner.
+    px(5, 4, 6, 6, '#f4ecd8')
+    px(5, 4, 2, 2, '#e04848'); px(9, 4, 2, 2, '#e04848'); px(7, 6, 2, 2, '#e04848'); px(5, 8, 2, 2, '#e04848'); px(9, 8, 2, 2, '#e04848')
     px(3, 12, 2, 3, K); px(11, 12, 2, 3, K)
   })
   tileTexture(scene, 'table_closed', px => {
@@ -163,16 +166,80 @@ function buildTiles (scene) {
   }, 4, 4)
 }
 
+// Second walk frame: the same body with the legs mid-stride.
+const STRIDE = ['...kppk..kppk...', '...kpk....kpk...', '...kk......kk...']
+
+function withStride (rows, legRow) {
+  const out = rows.slice()
+  STRIDE.forEach((r, i) => { out[legRow + i] = r })
+  return out
+}
+
+// Each character gets `key` (standing) and `key_b` (mid-stride).
+function character (scene, key, rows, palette, legRow) {
+  pixelTexture(scene, key, rows, palette)
+  pixelTexture(scene, `${key}_b`, withStride(rows, legRow), palette)
+}
+
 function buildCharacters (scene) {
-  pixelTexture(scene, 'cook', CHEF, CHEF_PALETTE)
-  pixelTexture(scene, 'server', PERSON, SERVER_PALETTE)
-  pixelTexture(scene, 'critic', PERSON, CRITIC_PALETTE)
-  pixelTexture(scene, 'guest_granny', PERSON, GRANNY_PALETTE)
-  pixelTexture(scene, 'guest_rusher', PERSON, RUSHER_PALETTE)
+  character(scene, 'cook', CHEF, CHEF_PALETTE, 13)
+  character(scene, 'server', PERSON, SERVER_PALETTE, 12)
+  character(scene, 'critic', PERSON, CRITIC_PALETTE, 12)
+  character(scene, 'guest_granny', PERSON, GRANNY_PALETTE, 12)
+  character(scene, 'guest_rusher', PERSON, RUSHER_PALETTE, 12)
   Object.entries(PET_PALETTES).forEach(([key, [rows, palette]]) => pixelTexture(scene, key, rows, palette))
   const palettes = customerPalettes()
-  palettes.forEach((p, i) => pixelTexture(scene, `customer${i}`, PERSON, p))
+  palettes.forEach((p, i) => character(scene, `customer${i}`, PERSON, p, 12))
   scene.registry.set('customerVariants', palettes.length)
+}
+
+function buildDecor (scene) {
+  // Night window set into the top wall.
+  tileTexture(scene, 'window', px => {
+    px(0, 0, 16, 16, '#241d33')
+    px(0, 0, 16, 2, '#3a3150')
+    px(2, 3, 12, 11, K)
+    px(3, 4, 10, 9, '#1c2a4a')
+    px(3, 4, 10, 2, '#2c4070')
+    px(7, 4, 1, 9, K); px(3, 8, 10, 1, K)
+    px(4, 5, 1, 1, '#f4f4f4'); px(11, 6, 1, 1, '#ffd93d'); px(9, 10, 1, 1, '#f4f4f4')
+    px(2, 14, 12, 1, '#5d6475')
+  })
+  // Pots and pans hanging on the kitchen wall.
+  tileTexture(scene, 'utensils', px => {
+    px(0, 0, 16, 16, '#241d33')
+    px(0, 0, 16, 2, '#3a3150')
+    px(1, 3, 14, 1, '#6b6b7a')
+    px(3, 4, 1, 4, '#9aa3b5'); px(2, 8, 3, 4, '#9aa3b5'); px(2, 8, 3, 1, '#c5ccda')
+    px(8, 4, 1, 3, '#9aa3b5'); px(6, 7, 5, 3, K); px(7, 7, 3, 2, '#5d6475')
+    px(12, 4, 1, 6, '#b07a48'); px(11, 10, 3, 2, '#9aa3b5')
+  })
+  tileTexture(scene, 'plant', px => {
+    px(5, 11, 6, 4, K); px(6, 11, 4, 3, '#b0603a'); px(6, 11, 4, 1, '#d0804a')
+    px(4, 4, 3, 6, '#2f8a3a'); px(9, 3, 3, 7, '#2f8a3a'); px(6, 2, 4, 9, '#5ec45e')
+    px(7, 1, 2, 2, '#7ed957'); px(3, 6, 2, 2, '#5ec45e'); px(11, 5, 2, 2, '#5ec45e')
+  })
+  tileTexture(scene, 'rug', px => {
+    px(0, 2, 16, 12, '#7a2a4a')
+    px(1, 3, 14, 10, '#a83a62')
+    px(2, 4, 12, 8, '#7a2a4a')
+    px(3, 5, 10, 6, '#c45a7e')
+  })
+  tileTexture(scene, 'coin', px => {
+    px(1, 0, 4, 1, K); px(0, 1, 6, 4, K); px(1, 5, 4, 1, K)
+    px(1, 1, 4, 4, '#ffd93d'); px(1, 1, 2, 1, '#fff0a0'); px(2, 2, 2, 2, '#c9a422')
+  }, 6, 6)
+  // Soft dark edges over the play area for a bit of depth.
+  const w = 640
+  const h = 320
+  const tex = scene.textures.createCanvas('vignette', w, h)
+  const ctx = tex.getContext()
+  const g = ctx.createRadialGradient(w / 2, h / 2, h * 0.35, w / 2, h / 2, w * 0.62)
+  g.addColorStop(0, 'rgba(18,15,26,0)')
+  g.addColorStop(1, 'rgba(18,15,26,0.45)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, w, h)
+  tex.refresh()
 }
 
 function buildIcons (scene) {
@@ -184,6 +251,7 @@ function buildIcons (scene) {
 
 export function buildTextures (scene) {
   buildTiles(scene)
+  buildDecor(scene)
   buildCharacters(scene)
   buildIcons(scene)
 }

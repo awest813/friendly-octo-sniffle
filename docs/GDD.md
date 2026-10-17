@@ -115,8 +115,8 @@ the endless wave 9.
 | 3 | First Draft | 6 | 3 | 34 s | 11 s | burger, salad | **Draft before the wave**; kids appear |
 | 4 | Double Booked | 6 | 4 | 32 s | 18 s (pairs) | +deluxe | customers arrive in pairs; rushers appear |
 | 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 11 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) ; **draft before the wave** |
-| 6 | Dinner Rush | 8 | 5 | 30 s | 10 s | all | — |
-| 7 | VIP Food Critic | 9 | 5 | 28 s | 10 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
+| 6 | Dinner Rush | 8 | 5 | 30 s | 11 s | all | — |
+| 7 | VIP Food Critic | 9 | 5 | 28 s | 11 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
 | 8 | Full House | 10 | 6 | 26 s | 16 s (pairs) | all | every table open |
 | 9 | Closing Time | ∞ | 6 | 26 s | 9 s | all | endless; every 4 customers served → spawns and patience 15% harsher. Keep your tips. |
 
@@ -212,6 +212,15 @@ The game deliberately uses the feel-good parts of reward psychology (clear goals
 - No fake scarcity or FOMO events; all content is available every run.
 - No comparing players against strangers: high scores are local and personal.
 
+## 6e. Balance audit (soak data)
+
+Bot-vs-bot runs (Sharp bots, Normal difficulty) log every wave: serves, PERFECTs, walkouts and **where each walkout happened** (in the queue, following, waiting to order, or waiting for food).
+
+Findings from the v0.6 soaks:
+- Waves 1–4 are clean for the bots (0–1 walkouts), which is right for the onboarding half of a run.
+- **Every walkout from wave 3 on happened while waiting for food**: the kitchen is the bottleneck, not the Server. One bot run with Charm Aura reached wave 7 with zero walkouts; one with Roller Skates + Double Grill lost all lives in wave 6. Drafts matter, but the swing was too big, so waves 6–7 now spawn every 11 s (was 10 s). Humans parallelise the kitchen better than the one-plate-at-a-time bot cook, so bots are a floor, not a target.
+- **Tip inflation:** with streaks, stars, guest multipliers and chains, late waves pay ~$30 per guest (~$250 per wave by wave 6), which made a $30 life meaningless. Shop prices now scale +35% per wave after wave 2, and each extra life costs more than the last (30, 50, 80, 120… before scaling).
+
 ## 7. Architecture (Phaser)
 
 ```
@@ -296,6 +305,13 @@ Godot → Phaser mapping used:
 - [x] Adoption Day after every 5th wave (every 20 serves in Closing Time): 3 dogs, 3 cats, one bonus each
 - [x] Pets wander (grid pathing), show their range, can be petted for a patience boost; the AI Server pets them too
 - [x] How to Play page; pets named on the run-over screen
+
+**Slice 7 — loop, balance and look**
+- [x] Prep time, chain bonus, wave progress bar, LAST GUESTS call with faster music
+- [x] Rhythm chop, perfect sear, chef's kiss quality bonus; dirty plates through the pass
+- [x] Shop prices scale with the wave; escalating life price; waves 6–7 eased
+- [x] Art: night windows, hanging utensils, plants, entrance rug, neon sign, checked tablecloths, vignette; walk-cycle frames for every character; seated guests sit behind the table; tip coins fly to the HUD; coin icon; empty-rail hint
+- [x] Pops stay inside the play area
 
 **Next**
 - [ ] Real playtest on two pads; tune against human numbers (bots are a floor, not a ceiling)

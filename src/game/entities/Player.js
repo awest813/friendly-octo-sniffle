@@ -123,6 +123,8 @@ export default class Player {
     }
 
     const bob = moving ? Math.abs(Math.sin(this.bobTime)) * -2 : 0
+    const frame = moving && Math.sin(this.bobTime) > 0 ? `${this.role}_b` : this.role
+    if (this.sprite.texture.key !== frame) this.sprite.setTexture(frame)
     this.sprite.setPosition(feet.x, feet.y + 5 + bob).setDepth(feet.y)
     this.shadow.setPosition(feet.x, feet.y + 4).setDepth(feet.y - 1)
     const dx = this.extra ? 5 : 0
