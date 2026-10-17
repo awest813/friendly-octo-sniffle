@@ -47,7 +47,7 @@ export default class Player {
   }
 
   buttonName (button) {
-    return this.input.pad ? button : KEY_NAMES[this.role][button]
+    return this.input.lastPad ? button : KEY_NAMES[this.role][button]
   }
 
   // Context prompt over the current target, e.g. "A: GRAB BUN".

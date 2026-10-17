@@ -340,7 +340,9 @@ export class Grill extends Station {
   }
 
   onPlaced () {
-    this.timer = this.item.state === 'cooked' ? TUNING.grillCookTime : 0
+    // A patty that arrives already cooked starts past the golden window:
+    // perfect sears only come from cooking it here.
+    this.timer = this.item.state === 'cooked' ? TUNING.grillCookTime + TUNING.searWindow + 0.01 : 0
     sfx('sizzle')
   }
 

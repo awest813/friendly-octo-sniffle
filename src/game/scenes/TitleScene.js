@@ -98,7 +98,6 @@ export default class TitleScene extends Phaser.Scene {
   startDemo () {
     this.registry.set('demo', true)
     this.registry.set('ai', { cook: true, server: true })
-    this.registry.set('bindings', { cook: null, server: null })
     RunState.reset()
     this.scene.start('GameScene')
   }

@@ -89,6 +89,10 @@ export default class SettingsScene extends Phaser.Scene {
       return
     }
     this.menu.handle([this.inputs])
-    this.menu.refresh()
+    // Fullscreen can change outside the menu (F key, Esc); refresh only then.
+    if (this.scale.isFullscreen !== this.wasFullscreen) {
+      this.wasFullscreen = this.scale.isFullscreen
+      this.menu.refresh()
+    }
   }
 }

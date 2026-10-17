@@ -4,7 +4,7 @@ export const TILE = 32
 export const MAP_TOP = 40
 
 export const FONT = '"Press Start 2P", monospace'
-export const VERSION = '0.5.0'
+export const VERSION = '0.9.0'
 
 export const COLORS = {
   bg: 0x120f1a,
@@ -40,7 +40,7 @@ export const TUNING = {
   lives: 3,
   baseTip: 5,
   speedTip: 5,
-  foodPatienceMult: 1.75,
+  foodPatienceMult: 1.9,
   queueSize: 4,
   busboyInterval: 12,
   endlessStep: 4,

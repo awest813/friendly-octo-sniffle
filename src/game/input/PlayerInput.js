@@ -73,6 +73,8 @@ export default class PlayerInput {
   update () {
     this.prev = this.now
     const pad = this.pad
+    // Cached for readers like button prompts, so they don't re-query pads.
+    this.lastPad = pad
     const k = this.keys
     this.now = {}
     Object.entries(PAD_ACTIONS).forEach(([action, button]) => {

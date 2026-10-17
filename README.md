@@ -49,9 +49,13 @@ disconnect, press A on any free pad, or that role's keyboard key.
 
 - **Cook:** take a plate from the stack and add a bun from its crate. Grill a patty (don't let it
   burn), add it to the plate, then put the plate on a yellow **pass** counter. Salads need chopped
-  lettuce and tomato: put them on the board and hold X.
+  lettuce and tomato: put them on the board and hold X. Want style points? Tap X on the green zone
+  for a PERFECT CHOP, and grab a patty while the grill bar flashes gold for a PERFECT SEAR.
 - **Server:** greet the customer at the front of the queue, lead them to a free table, take their
-  order, carry the right plate from the pass, then bring the dirty plate back to the sink.
+  order, carry the right plate from the pass, then bring the dirty plate back to the sink (or drop it
+  on the pass for the Cook). Doing the same job back to back builds a CHAIN bonus.
+- Each wave opens with a few seconds of **prep time**, and for the first two waves an arrow shows
+  each new player what to do next.
 - From wave 5, burnt food left on the grill catches fire. Grab the red extinguisher and hold X on
   the grill. While anything burns, every customer loses patience faster.
 - After each wave from wave 2, the **shop** sells lives, plates and calm music. Tips are both your
@@ -71,6 +75,13 @@ See the design doc's "Ethical fun" section for the reasoning.
 
 **Settings** (title screen or pause menu): difficulty, button prompts, sound and music volume,
 screen shake, gamepad rumble, AI teammate skill, fullscreen. They're saved in the browser.
+
+## Known limitations
+
+- Sound needs one click or key press first (a browser rule; gamepad buttons don't count).
+- No touch controls: you need gamepads or a keyboard.
+- High scores and settings are saved only in this browser.
+- The AI teammate is a solid partner, not a perfect one: it cooks one plate at a time.
 
 ## Development
 

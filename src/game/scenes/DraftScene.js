@@ -88,7 +88,11 @@ export default class DraftScene extends Phaser.Scene {
   update () {
     if (!this.inputs || this.done) return
     const canReroll = RunState.tips >= this.rerollPrice
-    this.rerollText.setText(`Y: REROLL FOR $${this.rerollPrice}  (YOU HAVE $${RunState.tips})`).setColor(canReroll ? CSS.white : CSS.dim)
+    this.rerollText.setText(`Y: REROLL FOR $${this.rerollPrice}  (YOU HAVE $${RunState.tips})`)
+    if (this.canReroll !== canReroll) {
+      this.canReroll = canReroll
+      this.rerollText.setColor(canReroll ? CSS.white : CSS.dim)
+    }
     for (const inp of this.inputs) {
       inp.update()
       if (inp.nav.x) {

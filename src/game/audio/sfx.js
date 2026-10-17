@@ -29,11 +29,22 @@ function tone (freq, start, dur, type = 'square', vol = 1, slideTo = null) {
   osc.stop(t + dur + 0.02)
 }
 
+// White-noise buffers, cached by length (chopping plays noise ~5x a second).
+const noiseCache = new Map()
+function noiseBuffer (dur) {
+  const len = Math.ceil(ctx.sampleRate * dur)
+  if (!noiseCache.has(len)) {
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate)
+    const data = buf.getChannelData(0)
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+    noiseCache.set(len, buf)
+  }
+  return noiseCache.get(len)
+}
+
 function noise (start, dur, vol = 0.6, freq = 3000) {
   const t = ctx.currentTime + start
-  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate)
-  const data = buf.getChannelData(0)
-  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+  const buf = noiseBuffer(dur)
   const src = ctx.createBufferSource()
   src.buffer = buf
   const filter = ctx.createBiquadFilter()

@@ -29,8 +29,12 @@ export default class Bot {
     this.wait = 0
     this.after = null
     // Demo and autoplay runs show the bots at their best.
-    const showcase = scene.registry.get('demo') || scene.registry.get('autoplay')
-    this.skill = SKILLS[showcase ? 'SHARP' : Settings.aiSkill] || SKILLS.NORMAL
+    this.showcase = scene.registry.get('demo') || scene.registry.get('autoplay')
+  }
+
+  // Read live, so changing AI TEAMMATE in the pause menu applies at once.
+  get skill () {
+    return SKILLS[this.showcase ? 'SHARP' : Settings.aiSkill] || SKILLS.NORMAL
   }
 
   tap (target, then, accept) {

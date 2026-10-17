@@ -28,8 +28,8 @@ export default class ShopScene extends Phaser.Scene {
 
     const next = WAVES[Math.min(RunState.wave + 1, WAVES.length) - 1]
     const prices = {
-      // 30, 50, 80, 120... with each life bought this run.
-      life: RunState.price(SHOP.life + SHOP.lifeStep * RunState.livesBought * (RunState.livesBought + 1) / 2),
+      // 30, 50, 80, 120... (steps of 20, 30, 40) with each life bought this run.
+      life: RunState.price(SHOP.life + SHOP.lifeStep / 4 * RunState.livesBought * (RunState.livesBought + 3)),
       plate: RunState.price(SHOP.plate),
       calm: RunState.price(SHOP.calm)
     }

@@ -64,6 +64,12 @@ export default class GameScene extends Phaser.Scene {
     this.platesGranted = 0
     this.lostRole = null
     this.pets = []
+    // Scene instances are reused on restart: clear the last run's wave state.
+    this.waveCfg = null
+    this.waveStats = null
+    this.waveServed = 0
+    this.spawned = 0
+    this.hintColor = null
 
     this.buildMap()
 
@@ -439,8 +445,11 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // After an overlay or rebind: ignore whatever is still held. A paused
+  // scene's gamepad plugin stops polling, so updating here would read stale
+  // pad state; settling for a few frames after resume reads the real one.
   primeInputs () {
-    this.players.forEach(p => { p.input.update(); p.input.update() })
+    this.players.forEach(p => { p.input.settleFrames = 3 })
   }
 
   // --- service -------------------------------------------------------------
@@ -770,7 +779,8 @@ export default class GameScene extends Phaser.Scene {
       else if (target) ok = target.interact(p)
       if (!ok) sfx('error')
     }
-    if (target && p.input.held('use')) target.use(p, dt)
+    // Only stations have a hold action; guests and pets don't.
+    if (target && target.use && p.input.held('use')) target.use(p, dt)
     if (p.role === 'cook' && RunState.has('cannon') && p.input.pressed('throw')) this.throwItem(p)
   }
 
@@ -811,9 +821,18 @@ export default class GameScene extends Phaser.Scene {
   updateHint (fires) {
     if (fires) {
       const blink = Math.floor(this.time.now / 300) % 2 === 0
-      this.hint.setText('FIRE! GRAB THE RED EXTINGUISHER AND HOLD X ON THE GRILL').setColor(blink ? '#ff4040' : '#ffd93d')
+      this.setHint('FIRE! GRAB THE RED EXTINGUISHER AND HOLD X ON THE GRILL', blink ? '#ff4040' : '#ffd93d')
     } else {
-      this.hint.setText((this.waveCfg && this.waveCfg.hint) || '').setColor('#8a8399')
+      this.setHint((this.waveCfg && this.waveCfg.hint) || '', '#8a8399')
+    }
+  }
+
+  // setColor redraws the text texture even when unchanged, so only call it on change.
+  setHint (text, color) {
+    this.hint.setText(text)
+    if (this.hintColor !== color) {
+      this.hintColor = color
+      this.hint.setColor(color)
     }
   }
 
@@ -857,7 +876,10 @@ export default class GameScene extends Phaser.Scene {
         RunState.reset()
         this.scene.restart()
       },
-      quit: () => this.scene.start('TitleScene', { skipSplash: true })
+      quit: () => {
+        duckMusic(false)
+        this.scene.start('TitleScene', { skipSplash: true })
+      }
     })
   }
 
