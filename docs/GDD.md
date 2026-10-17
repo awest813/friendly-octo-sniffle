@@ -32,7 +32,7 @@ Customer arrives → queues at entrance
 ```
 
 - **Fail state:** 3 lives. Each customer whose patience runs out leaves angry: −1 life. 0 lives = run over.
-- **Patience** refills at every service step (queued → seated → ordered). The food step gets 1.9× patience because the kitchen is the bottleneck. A customer following the Server to a table loses patience at half speed, so leading someone around with no free table isn't free.
+- **Patience** refills at every service step (queued → seated → ordered). The food step gets 2.05× patience because the kitchen is the bottleneck. A customer following the Server to a table loses patience at half speed, so leading someone around with no free table isn't free.
 - **Tips:** $5 base + up to $5 speed bonus (proportional to patience left), × modifiers.
 - **Juice:** ticket ding, sizzle, tip pop, screen shake + gamepad rumble on burns and wrong deliveries.
 - **Loop tension:** the Cook can't leave the kitchen; the Server has to come *into* the kitchen to drop dirty plates at the sink, through a one-tile doorway. Collisions between the two players are on.
@@ -220,6 +220,7 @@ Findings from the v0.6 soaks:
 - Waves 1–4 are clean for the bots (0–1 walkouts), which is right for the onboarding half of a run.
 - **Every walkout from wave 3 on happened while waiting for food**: the kitchen is the bottleneck, not the Server. One bot run with Charm Aura reached wave 7 with zero walkouts; one with Roller Skates + Double Grill lost all lives in wave 6. Drafts matter, but the swing was too big, so waves 6–7 now spawn every 11 s (was 10 s). Humans parallelise the kitchen better than the one-plate-at-a-time bot cook, so bots are a floor, not a target.
 - Second soak round (4 runs): 3 of 4 hit the kitchen wall in waves 5–6, all walkouts while waiting for food; only a Charm Aura run reached wave 8. Waves 5–6 now have 7 guests every 12 s, wave 7 has 8, and food patience is 1.9× (was 1.75×).
+- Third soak round (0.9.0, 4 runs): runs ended on waves 4, 6, 6 and 6, every loss from guests waiting for food. Food patience is now 2.05× (was 1.9×).
 - **Tip inflation:** with streaks, stars, guest multipliers and chains, late waves pay ~$30 per guest (~$250 per wave by wave 6), which made a $30 life meaningless. Shop prices now scale +35% per wave after wave 2, and each extra life costs more than the last (30, 50, 80, 120… before scaling).
 
 ## 7. Architecture (Phaser)
