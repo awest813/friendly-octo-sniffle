@@ -39,7 +39,7 @@ export const TUNING = {
   lives: 3,
   baseTip: 5,
   speedTip: 5,
-  foodPatienceMult: 1.5,
+  foodPatienceMult: 1.75,
   queueSize: 4,
   busboyInterval: 12,
   endlessStep: 4,

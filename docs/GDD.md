@@ -32,7 +32,7 @@ Customer arrives → queues at entrance
 ```
 
 - **Fail state:** 3 lives. Each customer whose patience runs out leaves angry: −1 life. 0 lives = run over.
-- **Patience** refills at every service step (queued → seated → ordered). The food step gets 1.5× patience because it takes the longest. A customer following the Server to a table loses patience at half speed, so leading someone around with no free table isn't free.
+- **Patience** refills at every service step (queued → seated → ordered). The food step gets 1.75× patience because the kitchen is the bottleneck. A customer following the Server to a table loses patience at half speed, so leading someone around with no free table isn't free.
 - **Tips:** $5 base + up to $5 speed bonus (proportional to patience left), × modifiers.
 - **Juice:** ticket ding, sizzle, tip pop, screen shake + gamepad rumble on burns and wrong deliveries.
 - **Loop tension:** the Cook can't leave the kitchen; the Server has to come *into* the kitchen to drop dirty plates at the sink, through a one-tile doorway. Collisions between the two players are on.
@@ -94,17 +94,17 @@ Order doesn't matter, but the set has to match exactly. 4 plates exist in total,
 Hand-authored waves 1–8. The "+15% per wave" from v0.9 now only applies to
 the endless wave 9.
 
-| # | Name | Customers | Tables | Patience | Recipes | Twist |
-|---|---|---|---|---|---|---|
-| 1 | Opening Shift (tutorial) | 3 | 2 | 45 s | burger | slow spawns |
-| 2 | Lunch Rush | 5 | 3 | 35 s | +salad | — |
-| 3 | First Draft | 6 | 3 | 32 s | burger, salad | **Draft #1 before the wave** |
-| 4 | Double Booked | 8 | 4 | 30 s | +deluxe | customers arrive in pairs |
-| 5 | Fire in the Kitchen (mid-boss) | 8 | 4 | 28 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) |
-| 6 | Second Draft | 9 | 5 | 26 s | all | **Draft #2 before the wave** |
-| 7 | VIP Food Critic | 9 | 5 | 26 s | all | 2 critics: 15 s patience, ×3 tips |
-| 8 | Full House | 12 | 6 | 24 s | all | fast pairs |
-| 9 | Closing Time | ∞ | 6 | 24 s | all | endless; every 4 customers served → spawns and patience 15% harsher. Keep your tips. |
+| # | Name | Customers | Tables | Patience | Spawn every | Recipes | Twist |
+|---|---|---|---|---|---|---|---|
+| 1 | Opening Shift (tutorial) | 3 | 2 | 45 s | 14 s | burger | — |
+| 2 | Lunch Rush | 5 | 3 | 36 s | 12 s | +salad | — |
+| 3 | First Draft | 6 | 3 | 34 s | 11 s | burger, salad | **Draft #1 before the wave** |
+| 4 | Double Booked | 6 | 4 | 32 s | 18 s (pairs) | +deluxe | customers arrive in pairs |
+| 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 11 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) |
+| 6 | Second Draft | 8 | 5 | 30 s | 10 s | all | **Draft #2 before the wave** |
+| 7 | VIP Food Critic | 9 | 5 | 28 s | 10 s | all | 2 critics: 15 s patience, ×3 tips |
+| 8 | Full House | 10 | 6 | 26 s | 16 s (pairs) | all | every table open |
+| 9 | Closing Time | ∞ | 6 | 26 s | 9 s | all | endless; every 4 customers served → spawns and patience 15% harsher. Keep your tips. |
 
 - **Clearing wave 8 = the diner is saved (run counts as a win).** Wave 9 is a score chase until lives run out.
 - The draft is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
@@ -196,7 +196,7 @@ Godot → Phaser mapping used:
 
 **Slice 3 — solo + polish**
 - [x] AI teammate for solo play (Cook or Server), and a bot-vs-bot autoplay mode
-- [x] Soak test: full bot runs through wave 8 and into Closing Time with no errors, used for the balance pass below
+- [x] Soak tests with bot-vs-bot runs. They found two bot bugs (walking through chairs, looping on the queue) and showed wave 4 was a cliff: pairs every 14 s plus the new deluxe recipe needed a dish every ~7 s. Balance pass: wave 4 down to 6 customers in pairs every 18 s, gentler waves 5–9, food patience 1.5× → 1.75×
 - [x] Critic tickets marked VIP in gold; tickets flash red under 20% patience
 - [x] Following customers lose patience at half speed
 - [x] Local top-5 high scores (tips), shown on game over and in the lobby
@@ -216,7 +216,7 @@ Godot → Phaser mapping used:
 | Cook clicks a ticket to start cooking | Needs a mouse, which nobody has a hand free for | Tickets show the full recipe, so there's nothing to select |
 | "9 waves to close" and "wave 9 endless" | Contradiction | Clear 8 = win; wave 9 = endless score chase |
 | "+15% per wave" and hand-designed waves | Contradiction | Hand-authored 1–8; +15% steps only in endless |
-| Wave 2 patience 35 s > 30 s base | Lunch rush easier than the base | Patience curve 45 → 24 s, critics 15 s |
+| Wave 2 patience 35 s > 30 s base | Lunch rush easier than the base | Patience curve 45 → 26 s, critics 15 s |
 | "Shop unlocks" at wave 3, but no shop design | Tips had no use | Shop after every wave from wave 2; tips are both currency and score |
 | Cook "kitchen locked" but free WASD movement | Unclear | Cook moves freely *inside* the kitchen; doorway blocks only the Cook |
 | Camera lerps to players' midpoint | Unnecessary on one screen; can push a player off-screen | Fixed camera |
