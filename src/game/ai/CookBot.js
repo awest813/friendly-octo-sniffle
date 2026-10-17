@@ -9,11 +9,6 @@ const subset = (a, b) => a.every(x => b.includes(x))
 // Works the oldest open ticket: one plate on an assembly counter, parts
 // added as they're ready, finished dish onto a free pass counter.
 export default class CookBot extends Bot {
-  constructor (scene, player) {
-    super(scene, player)
-    this.done = new Set()
-  }
-
   get stations () {
     const st = this.scene.stations
     return {
@@ -28,16 +23,18 @@ export default class CookBot extends Bot {
     }
   }
 
-  // Tickets the cook hasn't sent out yet, most urgent first.
+  // Tickets still waiting on a dish, most urgent first. Finished dishes that
+  // already exist (on the pass, stashed on a spare counter, or in the
+  // Server's hands) cover the most urgent matching tickets, since that's who
+  // the Server serves first. Counting real dishes instead of remembering
+  // which ticket a dish was "for" can't drift when the Server serves a
+  // different guest with the same order.
   openOrders () {
     const open = this.scene.rail.tickets
       .map(t => t.order)
-      .filter(o => o.customer.state === 'waiting' && !this.done.has(o.id))
+      .filter(o => o.customer.state === 'waiting')
     open.sort((a, b) => a.customer.patience - b.customer.patience)
-    if (!this.advisor) return open
-    // As a coach for a human, the cook's own sent dishes aren't tracked, so
-    // count finished dishes on the pass or in the Server's hands instead.
-    const ready = this.scene.stations.filter(x => x.isPass).map(x => x.item)
+    const ready = this.scene.stations.filter(x => x.isPass || (x instanceof Counter && !x.assembly)).map(x => x.item)
       .concat([this.scene.server.item, this.scene.server.extra])
       .map(plateDish).filter(Boolean)
     return open.filter(o => {
@@ -50,13 +47,6 @@ export default class CookBot extends Bot {
 
   currentOrder () {
     return this.openOrders()[0] || null
-  }
-
-  markSent (dish) {
-    const order = this.scene.rail.tickets
-      .map(t => t.order)
-      .find(o => o.recipe === dish && !this.done.has(o.id))
-    if (order) this.done.add(order.id)
   }
 
   // A plate can match one dish while still being built into another
@@ -82,7 +72,7 @@ export default class CookBot extends Bot {
       if (this.finished(held.contents, dish, order && order.recipe)) {
         const pass = S.passes.find(p => !p.item)
         if (!pass) return this.stash(S)
-        return this.tap(pass, () => { if (!this.player.item) this.markSent(dish) })
+        return this.tap(pass)
       }
       if (held.contents.length && (!recipe || !subset(held.contents, recipe.parts))) return this.tap(S.bin)
       if (!held.contents.length && plateSt) return this.tap(this.scene.plateStack)
@@ -124,6 +114,10 @@ export default class CookBot extends Bot {
 
     const burnt = S.grills.find(g => g.item && g.item.state === 'burnt')
     if (burnt) return this.tap(burnt)
+
+    // A finished dish stashed while the pass was full goes out as soon as it can.
+    const stashedDish = S.counters.find(c => !c.assembly && plateDish(c.item))
+    if (stashedDish && S.passes.some(p => !p.item)) return this.tap(stashedDish)
 
     if (plateSt) {
       const dish = plateDish(plateSt.item)
