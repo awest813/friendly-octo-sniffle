@@ -28,17 +28,21 @@ export default class ShopScene extends Phaser.Scene {
 
     const next = WAVES[Math.min(RunState.wave + 1, WAVES.length) - 1]
     const prices = {
-      life: RunState.price(SHOP.life),
+      // 30, 50, 80, 120... with each life bought this run.
+      life: RunState.price(SHOP.life + SHOP.lifeStep * RunState.livesBought * (RunState.livesBought + 1) / 2),
       plate: RunState.price(SHOP.plate),
       calm: RunState.price(SHOP.calm)
     }
     const items = [
       {
         label: '+1 LIFE',
-        detail: 'One more angry walkout allowed.',
+        detail: 'Price rises with each life bought.',
         price: prices.life,
         enabled: () => RunState.lives < TUNING.lives && RunState.tips >= prices.life,
-        action: () => this.buy(prices.life, () => { RunState.lives++ })
+        action: () => this.buy(prices.life, () => {
+          RunState.lives++
+          RunState.livesBought++
+        })
       },
       {
         label: '+1 PLATE',

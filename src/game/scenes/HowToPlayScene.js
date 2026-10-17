@@ -28,15 +28,15 @@ const PAGES = [
     icons: ['plate', '>', 'bun_raw', 'patty_raw', '>', 'patty_cooked', '>', 'dish_burger'],
     lines: [
       'A: grab from crates, put down, add to a plate.',
-      'X (hold) at the board: chop lettuce and tomato.',
-      'Patties cook on the grill - and burn if left.',
+      'BURGER bun + patty  SALAD lettuce + tomato',
+      'DELUXE bun + patty + lettuce (chopped veg)',
       '',
-      'BURGER   bun + grilled patty',
-      'SALAD    chopped lettuce + chopped tomato',
-      'DELUXE   bun + grilled patty + chopped lettuce',
-      '',
-      'Read the tickets up top. Finished plates go',
-      'on the yellow PASS counters in the wall.'
+      'Chop: hold X, or TAP X as the marker hits the',
+      'green zone - two hits make a PERFECT CHOP.',
+      'Grill: grab the patty while the bar flashes',
+      'gold for a PERFECT SEAR. Wait too long: burnt!',
+      'Perfect parts earn a CHEF\'S KISS tip bonus.',
+      'Finished plates go on the yellow PASS.'
     ]
   },
   {
@@ -44,15 +44,16 @@ const PAGES = [
     color: CSS.server,
     icons: ['customer1', '>', 'table', '>', 'dish_salad', '>', 'plate_dirty', 'sink'],
     lines: [
-      'A on the customer at the door: they follow you.',
-      'A on a free table: they sit down.',
-      'A on a customer showing "!": take the order.',
+      'A on the guest at the door: they follow you.',
+      'A on a free table: they sit. A on "!": order.',
+      'Grab the matching plate from the pass, serve',
+      'it with A. The faster, the bigger the tip.',
       '',
-      'Grab the matching plate from the pass and',
-      'serve it with A. The faster, the bigger the tip.',
-      '',
-      'Bring dirty plates back to the sink in the',
-      'kitchen. No clean plates means no food.'
+      'CHAINS: the same job back to back (seat, seat',
+      'or serve, serve) pays a bonus. Batch it!',
+      'Dirty plates go to the sink - or drop them on',
+      'the pass and let the Cook wash them.',
+      'Each wave starts with PREP TIME: plan ahead.'
     ]
   },
   {

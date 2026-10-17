@@ -67,8 +67,11 @@ export const TUNING = {
 }
 
 // Between-wave shop. Prices go up 20% with Bigger Tips.
+// Each extra life costs more than the last (lifeStep on top of the previous
+// step), so the shop is a safety net, not a way to buy out of every mistake.
 export const SHOP = {
   life: 30,
+  lifeStep: 20,
   plate: 12,
   calm: 20,
   reroll: 15
