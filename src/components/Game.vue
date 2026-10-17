@@ -8,7 +8,7 @@ import PhaserContainer from '@/components/PhaserContainer'
 
     <template #fallback>
       <div class="placeholder">
-        Downloading ...
+        LOADING ...
       </div>
     </template>
   </Suspense>
@@ -16,7 +16,8 @@ import PhaserContainer from '@/components/PhaserContainer'
 
 <style lang="scss" scoped>
 .placeholder {
-  font-size: 2rem;
-  font-family: 'Courier New', Courier, monospace;
+  font-size: 1rem;
+  font-family: 'Press Start 2P', monospace;
+  color: #00ffd0;
 }
 </style>

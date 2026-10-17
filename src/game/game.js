@@ -1,23 +1,37 @@
 import Phaser from 'phaser'
+import { WIDTH, HEIGHT } from '@/game/constants'
 import BootScene from '@/game/scenes/BootScene'
-import PlayScene from '@/game/scenes/PlayScene'
+import LobbyScene from '@/game/scenes/LobbyScene'
+import GameScene from '@/game/scenes/GameScene'
+import DraftScene from '@/game/scenes/DraftScene'
+import GameOverScene from '@/game/scenes/GameOverScene'
+import RunState from '@/game/state/RunState'
 
-function launch(containerId) {
+function launch (containerId) {
   return new Phaser.Game({
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: WIDTH,
+    height: HEIGHT,
     parent: containerId,
+    backgroundColor: '#120f1a',
+    pixelArt: true,
+    scale: {
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    input: {
+      gamepad: true
+    },
     physics: {
       default: 'arcade',
       arcade: {
-        gravity: { y: 300 },
+        gravity: { x: 0, y: 0 },
         debug: false
       }
     },
-    scene: [BootScene, PlayScene]
+    scene: [BootScene, LobbyScene, GameScene, DraftScene, GameOverScene]
   })
 }
 
 export default launch
-export { launch }
+export { launch, RunState }

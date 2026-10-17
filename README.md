@@ -1,66 +1,59 @@
-# vue-phaser3
+# Duo Diner
 
-#### Webpack boilerplate that integrates Phaser 3 into a Vue 3 project.
+**One Cooks. One Serves. Both Panic.**
 
-This project template has been set up using the **Vue CLI 5** and includes:
-* *Sass*
-* *CSS Postprocessing*
-* *Babel*
-* *Source Minification*
+A two-player couch co-op roguelike about running a diner, built with Phaser 3 inside a Vue 3 host.
+One player cooks in the kitchen, the other runs the floor. You have to survive 8 waves of customers,
+draft power-ups along the way, then hold out through the endless Closing Time.
 
-## Build Setup
+The design doc is in [`docs/GDD.md`](docs/GDD.md).
 
-``` bash
-# install dependencies
-npm install
+## Controls
 
-# serve with live reloading at localhost:8080
-npm run serve
+Two gamepads are the main controls. In the lobby, the first pad to press **A** becomes the Cook,
+the second becomes the Server.
 
-# build for production with transpilation / minification
-npm run build
+| Action | Gamepad | Keyboard — Cook | Keyboard — Server |
+|---|---|---|---|
+| Move | Left stick / D-pad | WASD | Arrow keys |
+| Pick up / put down / greet / seat / order / deliver | A | Space | Enter |
+| Chop (hold, at a board) | X | E | Shift |
+| Pause | Start | Esc | Esc |
 
-# serve your production build at localhost:5000
-npm start
+The keyboard controls are a fallback for testing, or for playing with only one pad.
+
+## How to play
+
+- **Cook:** take a plate from the stack and add a bun from its crate. Grill a patty (don't let it burn), add it to
+  the plate, then put the plate on a yellow pass counter. Salads need chopped lettuce and tomato: put them on the
+  board and hold X.
+- **Server:** greet the customer at the front of the queue, lead them to a free table, take their order, carry
+  the right plate from the pass, then bring the dirty plate back to the sink in the kitchen.
+- Three angry walkouts and the run is over.
+
+## Development
+
+```bash
+npm install     # install dependencies
+npm run serve   # dev server with live reload at localhost:8080
+npm run build   # production build into dist/
+npm start       # serve the production build at localhost:5000
 ```
 
-## Extending the project to your needs
+All art is generated at boot from pixel strings (`src/game/art/`). Sound effects come from a tiny
+WebAudio synth (`src/game/audio/sfx.js`), so the game has no binary assets yet. In development builds,
+`window.__duo` exposes the Phaser game and `RunState` for debugging.
 
-If you want to add more features like *linting*, *unit testing* or *Typescript* to
-your own project, you can do so quite easily via Vue CLI's plugin system. Read
-the <a href="https://cli.vuejs.org/guide/" target="_blank">documentation</a>
-if you want to know more.
+```
+src/game/
+├─ data/      map (ASCII layout), recipes, waves, power-ups
+├─ art/       pixel sprites → generated textures
+├─ input/     gamepad-first input with keyboard fallback and rumble
+├─ state/     signal bus + run state
+├─ entities/  players, customers, items
+├─ stations/  crates, boards, grills, counters, plates, sink, bin, tables
+├─ ui/        HUD, ticket rail, effects
+└─ scenes/    Boot → Lobby → Game (+ Draft overlay) → GameOver
+```
 
-## Converting into your own repository
-
-If you want to maintain your own repo based on this boilerplate, you first need
-to detach it from this repo. Here is what you need to do:
-
-1. edit these files and enter your own project info
-	* *package.json*
-	* *README.md*
-	* *public/index.html*
-
-2. delete *LICENSE* (and perhaps add your own)
-
-3. reinitialize git
-<pre><code>rm -rf .git
-git init
-git add .
-git commit -m "Initial commit"
-</code></pre>
-
-## Sharing data between Vue and Phaser
-
-You might want to expose some game state that lives inside of your Phaser code
-to your Vue components and vice versa, for example a highscore. Here are two
-ways you can achieve sharing state between the frameworks.
-
-* Import a Phaser <a href="https://photonstorm.github.io/phaser3-docs/Phaser.Events.EventEmitter.html" target="_blank">EventEmitter</a> instance in
-both your Vue components and Phaser modules. Both sides can then listen to and
-emit events on that emitter.
-
-* Have both sides share a <a href="https://pinia.vuejs.org/introduction.html" target="_blank">
-Pinia</a> store instance. It works like an event emitter, but can also hold
-state. The Pinia store is nicely integrated into your Vue components and is easily
-accessible on the Phaser side by applying the *useStore* hook.
+Started from the [vue-phaser3](https://github.com/Sun0fABeach/vue-phaser3) template (MIT).
