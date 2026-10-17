@@ -1,5 +1,6 @@
 import { Hook, Bin } from '@/game/stations/stations'
 import { isCleanPlate, isDirtyPlate, isServable, isTool, plateDish } from '@/game/entities/items'
+import Customer from '@/game/entities/Customer'
 import Bot from '@/game/ai/Bot'
 
 const byPatience = (a, b) => a.patience - b.patience
@@ -42,7 +43,9 @@ export default class ServerBot extends Bot {
     if (pass) return this.tap(pass)
 
     const queued = s.queue.filter(c => c.state === 'queued').sort(byPatience)[0]
-    if (queued && s.tables.some(t => t.free)) return this.tap(queued)
+    // Greeting anyone in the queue is as good as greeting the one we aimed for.
+    const anyQueued = c => c instanceof Customer && c.state === 'queued'
+    if (queued && s.tables.some(t => t.free)) return this.tap(queued, null, anyQueued)
 
     const dirty = s.tables.find(t => t.dirty)
     if (dirty) return this.tap(dirty)

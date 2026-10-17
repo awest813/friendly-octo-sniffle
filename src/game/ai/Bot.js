@@ -8,7 +8,8 @@ const MAX_REPATHS = 3
 const TASK_TIMEOUT = 8
 
 // Base for AI teammates. A brain's decide() returns a task:
-//   { target, mode: 'tap' | 'hold', until?, timeout?, then? }
+//   { target, mode: 'tap' | 'hold', until?, timeout?, then?, accept? }
+// `accept(target)` lets a task settle for an equivalent target.
 // The runner walks to a floor tile next to the target, faces it, checks the
 // player is really targeting it, then taps A or holds X like a human would.
 export default class Bot {
@@ -21,8 +22,8 @@ export default class Bot {
     this.after = null
   }
 
-  tap (target, then) {
-    return { target, mode: 'tap', then }
+  tap (target, then, accept) {
+    return { target, mode: 'tap', then, accept }
   }
 
   hold (target, until, timeout = 4) {
@@ -127,7 +128,8 @@ export default class Bot {
 
     if (!this.steer(task.stand.tx, task.stand.ty, dt)) return this.checkStuck(task, dt)
     this.player.facing.set(task.stand.fx, task.stand.fy)
-    if (this.player.target !== task.target) {
+    const aimed = this.player.target
+    if (aimed !== task.target && !(aimed && task.accept && task.accept(aimed))) {
       task.miss += dt
       return task.miss > 0.3 ? 'failed' : 'running'
     }

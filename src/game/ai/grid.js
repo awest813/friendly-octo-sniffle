@@ -53,8 +53,10 @@ export function findPath (start, goals, role, blocked = new Set()) {
 }
 
 // Floor tiles next to a target tile, each with the direction to face it.
+// Queue spots are skipped: standing on a waiting customer makes them the
+// thing you'd interact with.
 export function standTiles (tx, ty, role) {
   return DIRS
     .map(([dx, dy]) => ({ tx: tx + dx, ty: ty + dy, fx: -dx, fy: -dy }))
-    .filter(t => walkable(t.tx, t.ty, role))
+    .filter(t => walkable(t.tx, t.ty, role) && MAP[t.ty][t.tx] !== 'Q')
 }
