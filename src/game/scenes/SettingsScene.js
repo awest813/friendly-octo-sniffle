@@ -39,7 +39,7 @@ export default class SettingsScene extends Phaser.Scene {
     const items = [
       {
         label: 'DIFFICULTY',
-        detail: 'Relaxed: more patience. Frantic: +25% tips.',
+        detail: 'Frantic pays +25% tips.',
         value: () => Settings.difficulty,
         adjust: d => cycle('difficulty', diffs, d)
       },
@@ -50,7 +50,7 @@ export default class SettingsScene extends Phaser.Scene {
       { label: 'GAMEPAD RUMBLE', ...toggle('rumble') },
       {
         label: 'AI TEAMMATE',
-        detail: 'How sharp the bot partner plays.',
+        detail: 'How sharp the bot plays.',
         value: () => Settings.aiSkill,
         adjust: d => cycle('aiSkill', AI_SKILLS, d)
       },
@@ -61,7 +61,7 @@ export default class SettingsScene extends Phaser.Scene {
       },
       { label: 'BACK', action: () => this.close() }
     ]
-    this.menu = new Menu(this, { x: WIDTH / 2, y: 66, width: 380, rowHeight: 28, items })
+    this.menu = new Menu(this, { x: WIDTH / 2, y: 66, width: 420, rowHeight: 28, items })
     this.add.text(WIDTH / 2, HEIGHT - 16, 'UP / DOWN TO PICK  -  LEFT / RIGHT TO CHANGE  -  B TO GO BACK', {
       fontFamily: FONT, fontSize: '8px', color: CSS.dim
     }).setOrigin(0.5)

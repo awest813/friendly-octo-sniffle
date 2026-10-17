@@ -44,8 +44,9 @@ export default class GameOverScene extends Phaser.Scene {
     if (RunState.pets.length) {
       const names = RunState.pets.map(id => PET_BY_ID[id].name).join(' & ')
       this.add.text(WIDTH / 2, 166, `DINER PETS: ${names}`, { fontFamily: FONT, fontSize: '8px', color: '#ff9bb0' }).setOrigin(0.5)
+      // Pet portraits to the right of the stats, clear of the numbers.
       RunState.pets.forEach((id, i) => {
-        this.add.image(WIDTH / 2 + 150 + i * 30, 160, PET_BY_ID[id].texture)
+        this.add.image(WIDTH / 2 + 196 + i * 34, 112, PET_BY_ID[id].texture).setScale(1.5)
       })
     }
 

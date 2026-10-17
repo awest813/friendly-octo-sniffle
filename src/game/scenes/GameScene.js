@@ -285,7 +285,7 @@ export default class GameScene extends Phaser.Scene {
     // Final stretch: call it out and pick up the tempo.
     if (!cfg.endless && !this.lastCalled && this.spawned >= cfg.customers) {
       this.lastCalled = true
-      floatText(this, 432, MAP_TOP + 40, 'LAST GUESTS!', '#ff3b8d')
+      floatText(this, 432, MAP_TOP + 90, 'LAST GUESTS!', '#ff3b8d')
       setMusicIntensity(1.12)
     }
     this.spawnTimer = cfg.spawnEvery * RunState.diff.spawn / this.difficulty
@@ -811,7 +811,7 @@ export default class GameScene extends Phaser.Scene {
     this.prepLeft -= dt
     if (this.prepLeft <= 0) {
       this.prepText.setVisible(false)
-      floatText(this, 432, MAP_TOP + 30, 'DOORS OPEN!', '#7ed957')
+      floatText(this, 432, MAP_TOP + 90, 'DOORS OPEN!', '#7ed957')
       sfx('ding')
       return
     }
