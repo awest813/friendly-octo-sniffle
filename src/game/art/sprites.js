@@ -41,6 +41,54 @@ export const PERSON = [
   '................'
 ]
 
+// Pets: side-on dog, sitting cat. Drawn in the bottom of a 16x16 cell.
+export const DOG = [
+  '................',
+  '................',
+  '................',
+  '................',
+  '..........kkk...',
+  '.........kbbbk..',
+  '..k......kbkbbk.',
+  '.kbk.....kbbbbnk',
+  '..kbkkkkkkbbbkk.',
+  '...kbbbbbbbbbk..',
+  '...kbbbbbbbbbk..',
+  '...kBbbbbbbbBk..',
+  '...kbk....kbk...',
+  '...kkk....kkk...',
+  '................',
+  '................'
+]
+
+export const CAT = [
+  '................',
+  '................',
+  '................',
+  '.....k...k......',
+  '....kck.kck.....',
+  '....kcckcck.....',
+  '....kcecccek....',
+  '....kccpcck.....',
+  '.....kccck......',
+  '....kcCcCck.....',
+  '...kcCcCcCck.kk.',
+  '...kcccccccckck.',
+  '...kcccccccck.k.',
+  '...kckkkkkckk...',
+  '...kk.....kk....',
+  '................'
+]
+
+export const PET_PALETTES = {
+  pet_sunny: [DOG, { k: OUTLINE, b: '#e0b050', B: '#b0802a', n: OUTLINE }],
+  pet_biscuit: [DOG, { k: OUTLINE, b: '#e8963a', B: '#f4f4f4', n: OUTLINE }],
+  pet_beans: [DOG, { k: OUTLINE, b: '#c08040', B: '#f4f4f4', n: OUTLINE }],
+  pet_mochi: [CAT, { k: OUTLINE, c: '#c9a07a', C: '#8a6040', e: '#7ed957', p: '#ff9bb0' }],
+  pet_pepper: [CAT, { k: '#6b6b7a', c: '#2b2b3a', C: '#1a1423', e: '#ffd93d', p: '#ff9bb0' }],
+  pet_noodle: [CAT, { k: OUTLINE, c: '#f2e6d0', C: '#6b4a3a', e: '#69b4ea', p: '#ff9bb0' }]
+}
+
 export const CHEF_PALETTE = {
   k: OUTLINE, w: '#f4f4f4', g: '#c9c9d6', s: '#f2c39b', S: '#d79b74', e: OUTLINE, c: '#00ffd0', p: '#2b2b3a'
 }

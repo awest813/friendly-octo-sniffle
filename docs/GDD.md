@@ -168,6 +168,23 @@ Every trait is printed over the guest's head, so nothing is hidden.
 | Critic | VIP (gold), gold ticket | 15 s fixed | 3× | 1× | 1× | wave 7 (2 per wave) |
 | Big Tipper | $$$, glittering gold | 1.1× | 3× | 1× | 1× | 8% of guests from wave 2 |
 
+## 6b2. Diner pets — Adoption Day
+
+After every 5th wave cleared there's an **Adoption Day**: meet up to three shelter pets and adopt one, or decline ("not today"). Adoption is free and the pet stays for the rest of the run. Closing Time never "clears", so there **every 20 guests served counts as 5 waves** and brings another Adoption Day.
+
+| Pet | Kind | Bonus | Behaviour |
+|---|---|---|---|
+| SUNNY | Golden retriever | Guests within range lose patience 50% slower | Wanders; often follows the Server |
+| BISCUIT | Corgi | Guests served within range tip +30% | Wanders; often follows the Server |
+| BEANS | Beagle | Guests waiting in the queue lose patience 50% slower | Stays by the front door |
+| MOCHI | Tabby cat | Guests within range eat twice as fast (tables free up sooner) | Naps, moves rarely |
+| PEPPER | Black cat | Big Tippers appear twice as often | Naps, moves rarely |
+| NOODLE | Siamese cat | Petting gives +6 s (not +3 s), cooldown 12 s (not 20 s) | Naps, moves rarely |
+
+- Pets with an area bonus show a faint ring on the floor, so you can see and plan around their range.
+- **Petting:** walk up to any pet and press A ("A: PET SUNNY"). Every waiting guest gets +3 s of patience, with hearts and a woof or meow. Then "SUNNY IS HAPPY" during a 20 s cooldown. The AI Server pets them when it has nothing urgent to do.
+- Ethics note: pets are companions, not a collection to grind. They can't be bought, lost, starved or neglected; nothing bad happens to them, and the run-over screen remembers them by name.
+
 ## 6c. Rewards
 
 - **Streak:** every serve without a walkout adds 5% to tips, up to +50% (Lucky Streak: 10%, up to +100%). Shown as `x1.25` in the HUD; the tip sound climbs in pitch as it grows; milestone pops at 3, 5, 10, 15 and 20. A walkout resets it with a quiet grey "STREAK RESET", not a punishment screen.
@@ -274,6 +291,11 @@ Godot → Phaser mapping used:
 - [x] Four new power-ups; drafts before waves 3, 5 and 7
 - [x] Difficulty: Relaxed / Normal / Frantic (lobby X, or Settings), recorded with high scores
 - [x] How to Play page for guests and tips
+
+**Slice 6 — diner pets**
+- [x] Adoption Day after every 5th wave (every 20 serves in Closing Time): 3 dogs, 3 cats, one bonus each
+- [x] Pets wander (grid pathing), show their range, can be petted for a patience boost; the AI Server pets them too
+- [x] How to Play page; pets named on the run-over screen
 
 **Next**
 - [ ] Real playtest on two pads; tune against human numbers (bots are a floor, not a ceiling)

@@ -17,6 +17,8 @@ const RunState = {
     this.perfect = 0
     this.clutch = 0
     this.stars = 0
+    this.pets = []
+    this.petted = 0
     // Locked in for the whole run so it can't be changed mid-way.
     this.difficulty = DIFFICULTIES[Settings.difficulty] ? Settings.difficulty : 'NORMAL'
   },

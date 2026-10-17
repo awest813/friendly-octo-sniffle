@@ -9,6 +9,7 @@ import LobbyScene from '@/game/scenes/LobbyScene'
 import GameScene from '@/game/scenes/GameScene'
 import DraftScene from '@/game/scenes/DraftScene'
 import ShopScene from '@/game/scenes/ShopScene'
+import AdoptScene from '@/game/scenes/AdoptScene'
 import GameOverScene from '@/game/scenes/GameOverScene'
 import RunState from '@/game/state/RunState'
 
@@ -34,8 +35,8 @@ function launch (containerId) {
         debug: false
       }
     },
-    // Order is draw order: overlays (Draft, Shop, Settings) come after the scenes they cover.
-    scene: [BootScene, TitleScene, HowToPlayScene, ScoresScene, LobbyScene, GameScene, DraftScene, ShopScene, GameOverScene, SettingsScene]
+    // Order is draw order: overlays (Draft, Shop, Adopt, Settings) come after the scenes they cover.
+    scene: [BootScene, TitleScene, HowToPlayScene, ScoresScene, LobbyScene, GameScene, DraftScene, ShopScene, AdoptScene, GameOverScene, SettingsScene]
   })
 }
 

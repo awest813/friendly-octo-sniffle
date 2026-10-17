@@ -73,6 +73,23 @@ const PAGES = [
     ]
   },
   {
+    title: 'DINER PETS',
+    color: '#ff9bb0',
+    icons: ['pet_sunny', 'pet_biscuit', 'pet_beans', 'pet_mochi', 'pet_pepper', 'pet_noodle'],
+    lines: [
+      'After every 5th wave it\'s ADOPTION DAY: pick one',
+      'of three shelter pets to join the diner. Free,',
+      'optional, and they stay for the whole run.',
+      '',
+      'Dogs and cats each bring one bonus: calmer',
+      'guests, bigger tips, faster eating, more luck.',
+      'Rings on the floor show who is in range.',
+      '',
+      'Walk up to any pet and press A to pet it. Every',
+      'waiting guest gets a little more patience.'
+    ]
+  },
+  {
     title: 'CONTROLS',
     color: CSS.white,
     table: [

@@ -22,8 +22,8 @@ export function guestPool (wave) {
 export const LUCKY_CHANCE = 0.08
 export const LUCKY_FROM_WAVE = 2
 
-export function rollGuest (wave, rand = Math.random) {
-  if (wave >= LUCKY_FROM_WAVE && rand() < LUCKY_CHANCE) return GUESTS.lucky
+export function rollGuest (wave, luck = 1, rand = Math.random) {
+  if (wave >= LUCKY_FROM_WAVE && rand() < LUCKY_CHANCE * luck) return GUESTS.lucky
   const pool = guestPool(wave)
   const total = pool.reduce((s, [, w]) => s + w, 0)
   let r = rand() * total

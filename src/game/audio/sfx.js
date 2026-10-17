@@ -71,6 +71,9 @@ const SOUNDS = {
   // Rising pitch with the streak so a good run literally sounds better.
   streak: n => { if (n >= 2) tone(440 * Math.pow(2, Math.min(n, 12) / 12), 0.12, 0.09, 'triangle', 0.45) },
   star: i => { tone(784 * Math.pow(2, i * 4 / 12), 0, 0.18, 'square', 0.5); tone(1568 * Math.pow(2, i * 4 / 12), 0.05, 0.2, 'triangle', 0.3) },
+  woof: () => { tone(260, 0, 0.08, 'square', 0.6, 180); tone(300, 0.12, 0.1, 'square', 0.6, 200) },
+  meow: () => { tone(700, 0, 0.12, 'triangle', 0.5, 1000); tone(1000, 0.12, 0.2, 'triangle', 0.5, 600) },
+  adopt: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.08, 0.16, 'triangle', 0.45)),
   lucky: () => [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, i * 0.05, 0.1, 'triangle', 0.35)),
   wave: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, 'square', 0.45))
 }

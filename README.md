@@ -61,6 +61,9 @@ disconnect, press A on any free pad, or that role's keyboard key.
 - **Rewards:** every serve in a row grows your streak (up to +50% tips). Serve fast for PERFECT,
   save a guest at the last second for CLUTCH. Each wave is rated out of 3 stars, with bonus tips.
   Power-up drafts come before waves 3, 5 and 7.
+- **Diner pets:** after every 5th wave it's Adoption Day. Take home a shelter dog or cat (free,
+  for the whole run): each brings a bonus like calmer guests, bigger tips or more luck. Walk up and
+  press A to pet them for a patience boost for every waiting guest.
 - Three angry walkouts and the run is over. Your best runs are saved on this device.
 
 No ads, no purchases, no daily-login hooks: the game rewards playing well together, not time spent.

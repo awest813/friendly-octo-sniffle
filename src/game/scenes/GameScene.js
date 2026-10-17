@@ -3,6 +3,8 @@ import { WIDTH, HEIGHT, TILE, MAP_TOP, COLORS, TUNING, FONT } from '@/game/const
 import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL } from '@/game/data/map'
 import { WAVES, WIN_WAVE, CRITIC } from '@/game/data/waves'
 import { GUESTS, rollGuest } from '@/game/data/guests'
+import { PET_BY_ID, ADOPT_EVERY, ENDLESS_ADOPT_SERVED } from '@/game/data/pets'
+import Pet from '@/game/entities/Pet'
 import { POWERUPS } from '@/game/data/powerups'
 import {
   tileCenter, Counter, Hook, Board, Grill, Crate, PlateStack, Sink, Bin, Table
@@ -60,6 +62,7 @@ export default class GameScene extends Phaser.Scene {
     this.alarmTimer = 0
     this.platesGranted = 0
     this.lostRole = null
+    this.pets = []
 
     this.buildMap()
 
@@ -228,7 +231,7 @@ export default class GameScene extends Phaser.Scene {
     const critic = this.criticsLeft > 0 && Math.random() < this.criticsLeft / remaining
     if (critic) this.criticsLeft--
     const variants = this.registry.get('customerVariants')
-    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave)
+    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave, this.hasPet('pepper') ? 2 : 1)
     const menu = guest.orders ? cfg.recipes.filter(r => guest.orders.includes(r)) : cfg.recipes
     const c = new Customer(this, {
       x: this.entrance.x + TILE + offset * 18,
@@ -301,22 +304,72 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // Shop opens after every wave from wave 2 on, then any draft, then the wave.
+  // Between waves: shop (from wave 2), Adoption Day (every 5th wave), then
+  // nextWave() handles any draft.
   betweenWaves () {
-    if (RunState.wave < 2) {
-      this.nextWave()
+    const steps = []
+    if (RunState.wave >= 2) steps.push('ShopScene')
+    if (RunState.wave % ADOPT_EVERY === 0) steps.push('AdoptScene')
+    this.runSteps(steps, () => this.nextWave())
+  }
+
+  // Overlay scenes one after another, pausing the game under them.
+  runSteps (steps, done) {
+    if (!steps.length) {
+      done()
       return
     }
+    const key = steps.shift()
     duckMusic(true)
-    this.scene.launch('ShopScene', {
+    this.scene.launch(key, {
       onDone: () => {
         duckMusic(false)
         this.scene.resume()
         this.primeInputs()
         this.syncPlates()
-        this.nextWave()
+        this.syncPets()
+        this.runSteps(steps, done)
       }
     })
     this.scene.pause()
+  }
+
+  hasPet (id) {
+    return RunState.pets.includes(id)
+  }
+
+  // New adoptees trot in through the front door.
+  syncPets () {
+    RunState.pets.forEach(id => {
+      if (this.pets.some(p => p.def.id === id)) return
+      const pet = new Pet(this, PET_BY_ID[id], this.entrance.x + TILE, this.entrance.y)
+      pet.path = [{ tx: 18, ty: 8 }, { tx: 17, ty: 8 }]
+      this.pets.push(pet)
+      floatText(this, this.entrance.x - TILE * 2, this.entrance.y - 40, `${pet.def.name} JOINED THE DINER!`, '#ffd93d')
+      sfx(pet.def.kind === 'DOG' ? 'woof' : 'meow')
+    })
+  }
+
+  onPetted (pet) {
+    const boost = pet.boost
+    this.customers.forEach(c => {
+      if (c.ticking) c.patience = Math.min(c.patienceMax, c.patience + boost)
+    })
+    RunState.petted++
+    sfx(pet.def.kind === 'DOG' ? 'woof' : 'meow')
+    floatText(this, pet.pos.x, pet.pos.y - 30, `+${boost}s PATIENCE`, '#ff9bb0')
+  }
+
+  // Pet auras: how fast a guest loses patience, and their tip bonus.
+  petDrain (c) {
+    let m = 1
+    if (c.state === 'queued' && this.hasPet('beans')) m *= 0.5
+    this.pets.forEach(p => { if (p.def.id === 'sunny' && p.near(c.pos.x, c.pos.y)) m *= 0.5 })
+    return m
+  }
+
+  petTip (c) {
+    return this.pets.some(p => p.def.id === 'biscuit' && p.near(c.pos.x, c.pos.y)) ? 1.3 : 1
   }
 
   syncPlates () {
@@ -391,7 +444,7 @@ export default class GameScene extends Phaser.Scene {
     const speed = TUNING.speedTip * ratio
     const octo = both ? TUNING.octoBonus : 0
     const bonus = quality === 'PERFECT' ? TUNING.perfectBonus : quality === 'CLUTCH' ? TUNING.clutchBonus : 0
-    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * c.guest.tip * RunState.streakMult()) + octo + bonus
+    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * c.guest.tip * RunState.streakMult() * this.petTip(c)) + octo + bonus
     RunState.tips += tip
     RunState.served++
     if (quality === 'PERFECT') RunState.perfect++
@@ -410,6 +463,10 @@ export default class GameScene extends Phaser.Scene {
     }
     this.hud.bumpTips()
     this.hud.bumpStreak()
+    // Closing Time never "clears", so every N guests served counts as 5 waves.
+    if (this.waveCfg.endless && this.waveServed % ENDLESS_ADOPT_SERVED === 0) {
+      this.time.delayedCall(800, () => { if (!this.over) this.runSteps(['AdoptScene'], () => {}) })
+    }
     sfx('tip')
     sfx('streak', RunState.streak)
     return true
@@ -581,7 +638,7 @@ export default class GameScene extends Phaser.Scene {
     const feet = p.feet
     let best = null
     let bestD = TUNING.interactRadius
-    const candidates = this.stations.concat(this.queue.filter(c => c.state === 'queued'))
+    const candidates = this.stations.concat(this.queue.filter(c => c.state === 'queued'), this.pets)
     candidates.forEach(t => {
       if (!t.reachableBy(p)) return
       t.anchors.forEach(a => {
@@ -773,8 +830,11 @@ export default class GameScene extends Phaser.Scene {
       }
     }
 
+    this.pets.forEach(p => p.update(dt))
+    const mochi = this.pets.find(p => p.def.id === 'mochi')
     this.customers.slice().forEach(c => {
-      const expired = c.update(dt, c.state === 'following' ? this.server : null, drain)
+      if (mochi && c.state === 'eating' && mochi.near(c.pos.x, c.pos.y)) c.eatTimer -= dt
+      const expired = c.update(dt, c.state === 'following' ? this.server : null, drain * this.petDrain(c))
       if (expired && !this.over) this.leave(c, true)
       else if (c.state === 'eating' && c.eatTimer <= 0) {
         c.table.setDirty(true)

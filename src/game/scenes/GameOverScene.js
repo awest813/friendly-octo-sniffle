@@ -4,6 +4,7 @@ import { WIN_WAVE } from '@/game/data/waves'
 import PlayerInput from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
 import { loadScores, addScore, allBots } from '@/game/state/scores'
+import { PET_BY_ID } from '@/game/data/pets'
 import { sfx } from '@/game/audio/sfx'
 import { playMusic } from '@/game/audio/music'
 
@@ -40,6 +41,13 @@ export default class GameOverScene extends Phaser.Scene {
       this.add.text(WIDTH / 2 + 150, y, value, { fontFamily: FONT, fontSize: '8px', color: i === 4 ? CSS.diner : CSS.cook }).setOrigin(1, 0)
     })
     const newStreak = RunState.bestStreak > prevBestStreak && RunState.bestStreak >= 3
+    if (RunState.pets.length) {
+      const names = RunState.pets.map(id => PET_BY_ID[id].name).join(' & ')
+      this.add.text(WIDTH / 2, 166, `DINER PETS: ${names}`, { fontFamily: FONT, fontSize: '8px', color: '#ff9bb0' }).setOrigin(0.5)
+      RunState.pets.forEach((id, i) => {
+        this.add.image(WIDTH / 2 + 150 + i * 30, 160, PET_BY_ID[id].texture)
+      })
+    }
 
     const bots = allBots(this.registry)
     const ai = this.registry.get('ai') || {}

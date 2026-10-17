@@ -52,6 +52,10 @@ export default class ServerBot extends Bot {
 
     // Dishes nobody is waiting for clog the pass: clear one.
     if (passes.every(p => p.item)) return this.tap(passes[0])
+
+    // Nothing urgent: give a pet some love (it calms every waiting guest).
+    const pet = s.pets.find(p => p.cooldown <= 0)
+    if (pet && s.customers.some(c => c.ticking)) return this.tap(pet)
     return null
   }
 }
