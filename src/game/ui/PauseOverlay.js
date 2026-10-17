@@ -1,5 +1,6 @@
 import { WIDTH, HEIGHT, FONT, CSS } from '@/game/constants'
 import Menu from '@/game/ui/Menu'
+import RunState from '@/game/state/RunState'
 
 const DEPTH = 9940
 
@@ -25,6 +26,8 @@ export default class PauseOverlay {
     this.mode = 'menu'
     this.dim.setVisible(true)
     this.title.setText('PAUSED').setColor(CSS.diner)
+    const where = RunState.wave > RunState.goal ? 'CLOSING TIME' : `WAVE ${RunState.wave} OF ${RunState.goal}`
+    this.body.setY(128).setText(`${RunState.difficulty}  -  ${where}`)
     this.menu = new Menu(this.scene, {
       x: WIDTH / 2,
       y: 160,
@@ -45,7 +48,7 @@ export default class PauseOverlay {
     this.dim.setVisible(true)
     const name = role === 'cook' ? 'COOK' : 'SERVER'
     this.title.setText(`${name} PAD DISCONNECTED`).setColor(role === 'cook' ? CSS.cook : CSS.server)
-    this.body.setText(`RECONNECT IT AND PRESS A,\nPRESS A ON ANOTHER FREE PAD,\nOR PRESS ${keyHint} TO PLAY ON KEYBOARD`)
+    this.body.setY(150).setText(`RECONNECT IT AND PRESS A,\nPRESS A ON ANOTHER FREE PAD,\nOR PRESS ${keyHint} TO PLAY ON KEYBOARD`)
   }
 
   clear () {
