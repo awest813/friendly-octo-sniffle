@@ -220,7 +220,7 @@ Findings from the v0.6 soaks:
 - Waves 1–4 are clean for the bots (0–1 walkouts), which is right for the onboarding half of a run.
 - **Every walkout from wave 3 on happened while waiting for food**: the kitchen is the bottleneck, not the Server. One bot run with Charm Aura reached wave 7 with zero walkouts; one with Roller Skates + Double Grill lost all lives in wave 6. Drafts matter, but the swing was too big, so waves 6–7 now spawn every 11 s (was 10 s). Humans parallelise the kitchen better than the one-plate-at-a-time bot cook, so bots are a floor, not a target.
 - Second soak round (4 runs): 3 of 4 hit the kitchen wall in waves 5–6, all walkouts while waiting for food; only a Charm Aura run reached wave 8. Waves 5–6 now have 7 guests every 12 s, wave 7 has 8, and food patience is 1.9× (was 1.75×).
-- Third soak round (0.9.0, 4 runs): runs ended on waves 4, 6, 6 and 6, every loss from guests waiting for food. Food patience is now 2.05× (was 1.9×).
+- Third soak round (0.9.0, 4 runs): runs ended on waves 4, 6, 6 and 6, every loss from guests waiting for food. Food patience is now 2.05× (was 1.9×); a re-soak of 2 runs then cleared waves 1–7 with zero walkouts in waves 5–6, and both fell in wave 8, the final wave.
 - **Tip inflation:** with streaks, stars, guest multipliers and chains, late waves pay ~$30 per guest (~$250 per wave by wave 6), which made a $30 life meaningless. Shop prices now scale +35% per wave after wave 2, and each extra life costs more than the last (30, 50, 80, 120… before scaling).
 
 ## 7. Architecture (Phaser)
