@@ -17,6 +17,7 @@ import Hud from '@/game/ui/Hud'
 import TicketRail from '@/game/ui/TicketRail'
 import PauseOverlay from '@/game/ui/PauseOverlay'
 import { showReportCard } from '@/game/ui/ReportCard'
+import Coach from '@/game/ui/Coach'
 import BotInput from '@/game/ai/BotInput'
 import Settings from '@/game/state/settings'
 import CookBot from '@/game/ai/CookBot'
@@ -76,6 +77,10 @@ export default class GameScene extends Phaser.Scene {
     if (ai.cook) this.bots.push(new CookBot(this, this.cook))
     if (ai.server) this.bots.push(new ServerBot(this, this.server))
     this.players.forEach(p => { if (ai[p.role]) p.tag.setText('AI') })
+    // Coach arrows for human players during the first waves.
+    this.coaches = []
+    if (!ai.cook) this.coaches.push(new Coach(this, this.cook, new CookBot(this, this.cook)))
+    if (!ai.server) this.coaches.push(new Coach(this, this.server, new ServerBot(this, this.server)))
     this.physics.add.collider([this.cook.body, this.server.body], this.solids)
     this.physics.add.collider(this.cook.body, this.cookOnly)
     this.physics.add.collider(this.cook.body, this.server.body)
@@ -961,6 +966,8 @@ export default class GameScene extends Phaser.Scene {
     this.hud.update(cfg && !cfg.endless && this.waveStats ? (this.waveStats.served + this.waveStats.angry) / cfg.customers : null)
     this.updateHint(fires)
     this.updatePrep(dt)
+    const coaching = Settings.prompts && RunState.wave <= 2 && !this.demo
+    this.coaches.forEach(c => c.update(dt, coaching))
     this.rail.update()
   }
 }

@@ -178,7 +178,7 @@ export default class LobbyScene extends Phaser.Scene {
     ROLES.forEach(role => {
       const s = this.slots[role]
       const card = this.cards[role]
-      let text = s.pad !== null ? `PAD ${s.pad + 1} READY` : s.keys ? 'KEYBOARD READY' : 'PRESS A TO JOIN'
+      let text = s.pad !== null ? `PAD ${s.pad + 1} READY` : s.keys ? 'KEYBOARD READY' : `A OR ${role === 'cook' ? 'SPACE' : 'ENTER'} TO JOIN`
       if (!this.ready(role) && this.anyReady()) text = `AI PLAYS (${Settings.aiSkill})`
       card.status.setText(text).setColor(this.ready(role) ? card.info.color : CSS.white)
       card.panel.setStrokeStyle(2, this.ready(role) ? card.info.tint : COLORS.panelEdge)
@@ -188,7 +188,7 @@ export default class LobbyScene extends Phaser.Scene {
     if (this.bothReady()) prompt = 'PRESS A / START TO OPEN THE DINER'
     else if (this.anyReady()) prompt = `A AGAIN: PLAY WITH AI ${INFO[empty].title}  -  Y: AI SKILL`
     this.prompt.setText(prompt)
-    this.diffText.setText(`DIFFICULTY: ${Settings.difficulty}  (X TO CHANGE)`)
+    this.diffText.setText(`DIFFICULTY: ${Settings.difficulty}  (X / E TO CHANGE)`)
   }
 
   start (allBots = false) {

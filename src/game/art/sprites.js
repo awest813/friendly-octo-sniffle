@@ -379,6 +379,16 @@ export const ICONS = {
     '.kk.kk..',
     '...k....'
   ], { k: OUTLINE, g: '#7ed957', G: '#3c9a40' }],
+  arrow: [[
+    '..kkkk..',
+    '..kwwk..',
+    '..kwwk..',
+    'kkkwwkkk',
+    'kwwwwwwk',
+    '.kwwwwk.',
+    '..kwwk..',
+    '...kk...'
+  ], { k: OUTLINE, w: '#ffffff' }],
   star: [[
     '...kk...',
     '...yk...',

@@ -33,7 +33,19 @@ export default class CookBot extends Bot {
     const open = this.scene.rail.tickets
       .map(t => t.order)
       .filter(o => o.customer.state === 'waiting' && !this.done.has(o.id))
-    return open.sort((a, b) => a.customer.patience - b.customer.patience)
+    open.sort((a, b) => a.customer.patience - b.customer.patience)
+    if (!this.advisor) return open
+    // As a coach for a human, the cook's own sent dishes aren't tracked, so
+    // count finished dishes on the pass or in the Server's hands instead.
+    const ready = this.scene.stations.filter(x => x.isPass).map(x => x.item)
+      .concat([this.scene.server.item, this.scene.server.extra])
+      .map(plateDish).filter(Boolean)
+    return open.filter(o => {
+      const i = ready.indexOf(o.recipe)
+      if (i < 0) return true
+      ready.splice(i, 1)
+      return false
+    })
   }
 
   currentOrder () {
