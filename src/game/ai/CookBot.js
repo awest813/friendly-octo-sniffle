@@ -28,13 +28,16 @@ export default class CookBot extends Bot {
     }
   }
 
-  // Most urgent ticket the cook hasn't already sent out.
-  currentOrder () {
+  // Tickets the cook hasn't sent out yet, most urgent first.
+  openOrders () {
     const open = this.scene.rail.tickets
       .map(t => t.order)
       .filter(o => o.customer.state === 'waiting' && !this.done.has(o.id))
-    open.sort((a, b) => a.customer.patience - b.customer.patience)
-    return open[0] || null
+    return open.sort((a, b) => a.customer.patience - b.customer.patience)
+  }
+
+  currentOrder () {
+    return this.openOrders()[0] || null
   }
 
   markSent (dish) {
@@ -120,6 +123,13 @@ export default class CookBot extends Bot {
 
     const stashed = S.counters.find(c => !c.assembly && isPlateReady(c.item) && plateSt && needs.includes(c.item.id))
     if (stashed) return this.tap(stashed)
+
+    // Grilling is the slowest step: keep a patty going for every open order that needs one.
+    const pattyDemand = this.openOrders().filter(o => RECIPES[o.recipe].parts.includes('patty')).length -
+      (onPlate.includes('patty') ? 1 : 0)
+    const pattySupply = S.grills.filter(g => g.item && g.item.id === 'patty' && g.item.state !== 'burnt').length +
+      S.counters.filter(c => c.item && c.item.id === 'patty' && c.item.state === 'cooked').length
+    if (pattyDemand > pattySupply && S.grills.some(g => !g.item && !g.onFire)) return this.tap(S.crate('patty'))
 
     if (!recipe) return null
     if (!plateSt) {

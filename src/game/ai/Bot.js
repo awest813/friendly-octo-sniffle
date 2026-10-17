@@ -4,6 +4,8 @@ import { tileOf, key, findPath, standTiles } from '@/game/ai/grid'
 
 const STUCK_TIME = 0.6
 const MAX_REPATHS = 3
+// Whatever happens, a bot never sits on one task longer than this.
+const TASK_TIMEOUT = 8
 
 // Base for AI teammates. A brain's decide() returns a task:
 //   { target, mode: 'tap' | 'hold', until?, timeout?, then? }
@@ -98,28 +100,32 @@ export default class Bot {
     return false
   }
 
-  run (task, dt) {
-    if (!task.path && !this.plan(task)) return 'failed'
+  // Blocked (usually by the other player): re-plan around them.
+  checkStuck (task, dt) {
     const feet = this.player.feet
+    task.stuckFor += dt
+    if (task.stuckFor < STUCK_TIME) return 'running'
+    const moved = Math.hypot(feet.x - task.lastPos.x, feet.y - task.lastPos.y)
+    task.lastPos = { x: feet.x, y: feet.y }
+    task.stuckFor = 0
+    if (moved >= 4) return 'running'
+    task.repaths = (task.repaths || 0) + 1
+    if (task.repaths > MAX_REPATHS) return 'failed'
+    task.path = null
+    return 'running'
+  }
+
+  run (task, dt) {
+    task.age = (task.age || 0) + dt
+    if (task.age > TASK_TIMEOUT) return 'failed'
+    if (!task.path && !this.plan(task)) return 'failed'
 
     if (task.path.length) {
       if (this.steer(task.path[0].tx, task.path[0].ty, dt)) task.path.shift()
-      // Blocked (usually by the other player): re-plan around them.
-      task.stuckFor += dt
-      if (task.stuckFor > STUCK_TIME) {
-        const moved = Math.hypot(feet.x - task.lastPos.x, feet.y - task.lastPos.y)
-        task.lastPos = { x: feet.x, y: feet.y }
-        task.stuckFor = 0
-        if (moved < 4) {
-          task.repaths = (task.repaths || 0) + 1
-          if (task.repaths > MAX_REPATHS) return 'failed'
-          task.path = null
-        }
-      }
-      return 'running'
+      return this.checkStuck(task, dt)
     }
 
-    if (!this.steer(task.stand.tx, task.stand.ty, dt)) return 'running'
+    if (!this.steer(task.stand.tx, task.stand.ty, dt)) return this.checkStuck(task, dt)
     this.player.facing.set(task.stand.fx, task.stand.fy)
     if (this.player.target !== task.target) {
       task.miss += dt
