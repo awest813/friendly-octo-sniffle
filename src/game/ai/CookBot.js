@@ -47,16 +47,27 @@ export default class CookBot extends Bot {
     if (order) this.done.add(order.id)
   }
 
+  // A plate can match one dish while still being built into another
+  // (bun + patty is a burger, and also most of a deluxe).
+  finished (contents, dish, orderRecipe) {
+    if (!dish) return false
+    if (dish === orderRecipe) return true
+    const recipe = orderRecipe && RECIPES[orderRecipe]
+    if (recipe && subset(contents, recipe.parts)) return false
+    return this.openOrders().some(o => o.recipe === dish)
+  }
+
   stash (S) {
     const free = S.counters.find(c => !c.item)
     return free ? this.tap(free) : this.tap(S.bin)
   }
 
-  placeHeld (held, S, plateSt, recipe) {
+  placeHeld (held, S, plateSt, order) {
+    const recipe = order && RECIPES[order.recipe]
     if (isPlate(held)) {
       if (held.dirty) return this.tap(this.scene.sink)
       const dish = plateDish(held)
-      if (dish) {
+      if (this.finished(held.contents, dish, order && order.recipe)) {
         const pass = S.passes.find(p => !p.item)
         if (!pass) return this.stash(S)
         return this.tap(pass, () => { if (!this.player.item) this.markSent(dish) })
@@ -97,14 +108,14 @@ export default class CookBot extends Bot {
     const order = this.currentOrder()
     const recipe = order && RECIPES[order.recipe]
     const plateSt = S.assembly.find(a => isCleanPlate(a.item))
-    if (held) return this.placeHeld(held, S, plateSt, recipe)
+    if (held) return this.placeHeld(held, S, plateSt, order)
 
     const burnt = S.grills.find(g => g.item && g.item.state === 'burnt')
     if (burnt) return this.tap(burnt)
 
     if (plateSt) {
       const dish = plateDish(plateSt.item)
-      if (dish && S.passes.some(p => !p.item)) return this.tap(plateSt)
+      if (this.finished(plateSt.item.contents, dish, order && order.recipe) && S.passes.some(p => !p.item)) return this.tap(plateSt)
       if (recipe && !subset(plateSt.item.contents, recipe.parts)) return this.tap(plateSt)
     }
 
