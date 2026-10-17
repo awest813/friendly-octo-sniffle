@@ -29,6 +29,7 @@ export default class Hud {
 
   showModifiers (icons) {
     this.mods.forEach(m => m.destroy())
-    this.mods = icons.map((key, i) => this.scene.add.image(WIDTH - 10 - i * 18, 352, key).setDepth(9100).setAlpha(0.9))
+    // Stacked down the right-hand wall.
+    this.mods = icons.map((key, i) => this.scene.add.image(WIDTH - 16, MAP_TOP + 44 + i * 22, key).setDepth(9100))
   }
 }

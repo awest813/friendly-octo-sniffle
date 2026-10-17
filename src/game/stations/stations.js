@@ -1,7 +1,7 @@
 import { TILE, MAP_TOP, TUNING, FONT } from '@/game/constants'
 import { INGREDIENTS } from '@/game/data/recipes'
 import {
-  ItemView, ingredient, plate, combine, addToPlate, isCleanPlate, isDirtyPlate
+  ItemView, ingredient, plate, tool, combine, addToPlate, isCleanPlate, isDirtyPlate, isTool, isServable
 } from '@/game/entities/items'
 import RunState from '@/game/state/RunState'
 import { sfx } from '@/game/audio/sfx'
@@ -84,6 +84,29 @@ export class Station {
         sfx('drop')
         return true
       }
+      if (player.canStack(here)) {
+        player.stack(here)
+        this.setItem(null)
+        this.onTaken()
+        sfx('pickup')
+        return true
+      }
+    }
+    return false
+  }
+
+  // An item arriving without a player (Ingredient Cannon). Same rules as
+  // putting it down by hand.
+  receive (item) {
+    if (!this.item) {
+      if (!this.accepts(item)) return false
+      this.setItem(item)
+      this.onPlaced()
+      return true
+    }
+    if (isCleanPlate(this.item) && addToPlate(this.item, item)) {
+      this.refreshItem()
+      return true
     }
     return false
   }
@@ -112,6 +135,14 @@ export class Station {
 export class Counter extends Station {
   constructor (scene, tx, ty, texture = 'counter') {
     super(scene, tx, ty, texture)
+  }
+}
+
+// Where the extinguisher lives. Acts like a counter otherwise.
+export class Hook extends Station {
+  constructor (scene, tx, ty) {
+    super(scene, tx, ty, 'hook')
+    this.setItem(tool('extinguisher'))
   }
 }
 
@@ -170,15 +201,41 @@ export class Grill extends Station {
     super(scene, tx, ty, 'grill')
     this.timer = 0
     this.sizzle = 0
+    this.fireTimer = 0
+    this.onFire = false
+    this.spray = 0
+    this.sprayed = false
     this.smoke = scene.add.particles(this.x, this.y - 8, 'smoke', {
       speedY: { min: -30, max: -15 }, speedX: { min: -8, max: 8 },
       lifespan: 900, alpha: { start: 0.6, end: 0 }, scale: { start: 1, end: 2 }, tint: 0x9a9aaa,
       emitting: false
     }).setDepth(8400)
+    this.flames = scene.add.particles(this.x, this.y - 4, 'flame', {
+      x: { min: -10, max: 10 }, speedY: { min: -60, max: -25 }, speedX: { min: -10, max: 10 },
+      lifespan: 520, scale: { start: 2.2, end: 0.4 }, tint: [0xffd93d, 0xf79a3e, 0xe8402f],
+      frequency: 30, emitting: false
+    }).setDepth(8450)
+    this.foam = scene.add.particles(this.x, this.y - 6, 'smoke', {
+      x: { min: -12, max: 12 }, speed: { min: 10, max: 40 }, lifespan: 450,
+      alpha: { start: 0.9, end: 0 }, scale: { start: 1.5, end: 2.5 }, emitting: false
+    }).setDepth(8460)
+    this.hint = scene.add.text(this.x, this.y - 22, 'X', {
+      fontFamily: FONT, fontSize: '8px', color: '#1a1423', backgroundColor: '#ff4040', padding: { x: 2, y: 1 }
+    }).setOrigin(0.5).setDepth(8600).setVisible(false)
   }
 
   accepts (item) {
-    return item.type === 'ing' && item.id === 'patty' && item.state !== 'burnt'
+    return !this.onFire && item.type === 'ing' && item.id === 'patty' && item.state !== 'burnt'
+  }
+
+  interact (player) {
+    if (this.onFire) return false
+    return super.interact(player)
+  }
+
+  receive (item) {
+    if (this.onFire) return false
+    return super.receive(item)
   }
 
   onPlaced () {
@@ -188,9 +245,43 @@ export class Grill extends Station {
 
   onTaken () {
     this.timer = 0
+    this.fireTimer = 0
+  }
+
+  use (player, dt) {
+    if (!this.onFire || !isTool(player.item, 'extinguisher')) return false
+    this.spray += dt
+    this.sprayed = true
+    if (Math.random() < dt * 30) this.foam.emitParticle(2)
+    if (Math.random() < dt * 6) sfx('spray')
+    if (this.spray >= TUNING.extinguishTime) this.extinguish()
+    return true
+  }
+
+  ignite () {
+    this.onFire = true
+    this.fireTimer = 0
+    this.spray = 0
+    this.setItem(null)
+    this.flames.start()
+    this.scene.onFire(this)
+  }
+
+  extinguish () {
+    this.onFire = false
+    this.spray = 0
+    this.flames.stop()
+    this.sprite.clearTint()
+    this.foam.emitParticle(12)
+    this.scene.onFireOut(this)
   }
 
   update (dt) {
+    if (this.onFire) {
+      this.updateFire(dt)
+      return
+    }
+    this.hint.setVisible(false)
     const it = this.item
     if (!it || it.type !== 'ing' || it.id !== 'patty') {
       this.drawBar(null)
@@ -223,15 +314,33 @@ export class Grill extends Station {
       const blink = r > 0.5 && Math.floor(this.scene.time.now / 150) % 2 === 0
       this.drawBar(1 - r, blink ? 0xffffff : 0xff4040)
       if (r > 0.4 && Math.random() < dt * 8) this.smoke.emitParticle(1)
+    } else if (it.state === 'burnt' && this.scene.fireEnabled) {
+      // Burnt food left on the grill catches fire.
+      this.fireTimer += dt
+      const blink = Math.floor(this.scene.time.now / 100) % 2 === 0
+      this.drawBar(1 - this.fireTimer / TUNING.fireDelay, blink ? 0xffd93d : 0xff4040)
+      if (this.fireTimer >= TUNING.fireDelay) this.ignite()
     } else {
       this.drawBar(null)
     }
     if (it.state === 'burnt' && Math.random() < dt * 14) this.smoke.emitParticle(1)
   }
 
+  updateFire (dt) {
+    if (!this.sprayed) this.spray = Math.max(0, this.spray - dt * 0.5)
+    this.sprayed = false
+    this.sprite.setTint(Math.floor(this.scene.time.now / 120) % 2 ? 0xff8060 : 0xffd0a0)
+    if (Math.random() < dt * 10) this.smoke.emitParticle(1)
+    this.hint.setVisible(Math.floor(this.scene.time.now / 300) % 2 === 0)
+    this.drawBar(this.spray > 0 ? this.spray / TUNING.extinguishTime : null, 0xffffff)
+  }
+
   destroy () {
     super.destroy()
     this.smoke.destroy()
+    this.flames.destroy()
+    this.foam.destroy()
+    this.hint.destroy()
   }
 }
 
@@ -261,6 +370,10 @@ export class Crate extends Station {
     }
     return false
   }
+
+  receive () {
+    return false
+  }
 }
 
 export class PlateStack extends Station {
@@ -286,10 +399,11 @@ export class PlateStack extends Station {
 
   interact (player) {
     const held = player.item
-    if (!held && this.count > 0) {
+    if (this.count > 0 && (!held || player.canStack(plate()))) {
       this.count--
       this.render()
-      player.setItem(plate())
+      if (held) player.stack(plate())
+      else player.setItem(plate())
       sfx('pickup')
       return true
     }
@@ -299,6 +413,10 @@ export class PlateStack extends Station {
       sfx('drop')
       return true
     }
+    return false
+  }
+
+  receive () {
     return false
   }
 }
@@ -347,6 +465,10 @@ export class Sink extends Station {
     }
     this.drawBar(this.timer / TUNING.washTime, 0x69b4ea)
   }
+
+  receive () {
+    return false
+  }
 }
 
 export class Bin extends Station {
@@ -368,6 +490,10 @@ export class Bin extends Station {
       return true
     }
     return false
+  }
+
+  receive (item) {
+    return item.type === 'ing'
   }
 }
 
@@ -415,9 +541,10 @@ export class Table extends Station {
 
   interact (player) {
     const scene = this.scene
-    if (this.dirty && !player.item) {
+    if (this.dirty && (!player.item || player.canStack(plate(true)))) {
       this.setDirty(false)
-      player.setItem(plate(true))
+      if (player.item) player.stack(plate(true))
+      else player.setItem(plate(true))
       sfx('pickup')
       return true
     }
@@ -430,9 +557,13 @@ export class Table extends Station {
       scene.takeOrder(c)
       return true
     }
-    if (c && c.state === 'waiting' && isCleanPlate(player.item) && player.item.contents.length) {
+    if (c && c.state === 'waiting' && (isServable(player.item) || isServable(player.extra))) {
       return scene.deliver(c, player)
     }
+    return false
+  }
+
+  receive () {
     return false
   }
 }

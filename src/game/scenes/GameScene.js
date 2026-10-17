@@ -4,14 +4,15 @@ import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL } from '@/game/data/map'
 import { WAVES, WIN_WAVE, CRITIC } from '@/game/data/waves'
 import { POWERUPS } from '@/game/data/powerups'
 import {
-  tileCenter, Counter, Board, Grill, Crate, PlateStack, Sink, Bin, Table
+  tileCenter, Counter, Hook, Board, Grill, Crate, PlateStack, Sink, Bin, Table
 } from '@/game/stations/stations'
 import Player from '@/game/entities/Player'
 import Customer from '@/game/entities/Customer'
-import { plateDish } from '@/game/entities/items'
-import PlayerInput from '@/game/input/PlayerInput'
+import { plateDish, ingredientTexture } from '@/game/entities/items'
+import PlayerInput, { PAD } from '@/game/input/PlayerInput'
 import Hud from '@/game/ui/Hud'
 import TicketRail from '@/game/ui/TicketRail'
+import PauseOverlay from '@/game/ui/PauseOverlay'
 import { floatText, shake, banner } from '@/game/ui/fx'
 import RunState from '@/game/state/RunState'
 import bus from '@/game/state/bus'
@@ -26,11 +27,15 @@ export default class GameScene extends Phaser.Scene {
 
   create () {
     initSfx(this)
+    // Scene systems survive a restart, so clear any pause left from the last run.
+    this.time.paused = false
+    this.tweens.resumeAll()
     this.cameras.main.setBackgroundColor(COLORS.bg)
     this.physics.world.setBounds(0, MAP_TOP, WIDTH, HEIGHT - MAP_TOP)
     this.solids = this.physics.add.staticGroup()
     this.cookOnly = this.physics.add.staticGroup()
     this.stations = []
+    this.grid = new Map()
     this.tables = []
     this.customers = []
     this.queue = []
@@ -41,6 +46,9 @@ export default class GameScene extends Phaser.Scene {
     this.over = false
     this.waveActive = false
     this.busTimer = 0
+    this.alarmTimer = 0
+    this.platesGranted = 0
+    this.lostRole = null
 
     this.buildMap()
 
@@ -57,15 +65,31 @@ export default class GameScene extends Phaser.Scene {
     this.hint = this.add.text(WIDTH / 2, HEIGHT - 12, '', {
       fontFamily: FONT, fontSize: '8px', color: '#8a8399'
     }).setOrigin(0.5).setDepth(9100)
-    this.pauseText = this.add.text(WIDTH / 2, HEIGHT / 2, 'PAUSED', {
-      fontFamily: FONT, fontSize: '16px', color: '#ffd93d', backgroundColor: '#120f1a', padding: { x: 12, y: 10 }
-    }).setOrigin(0.5).setDepth(9900).setVisible(false)
+    this.overlay = new PauseOverlay(this)
+
+    if (this.input.gamepad) {
+      this.input.gamepad.on('down', this.onPadDown, this)
+      this.events.once('shutdown', () => this.input.gamepad.off('down', this.onPadDown, this))
+    }
 
     this.time.delayedCall(500, () => this.nextWave())
   }
 
   addSolid (x, y, group = this.solids) {
     group.add(this.add.zone(x, y, TILE, TILE))
+  }
+
+  addStation (s) {
+    this.stations.push(s)
+    this.grid.set(`${s.tx},${s.ty}`, s)
+    if (s instanceof Table) this.grid.set(`${s.tx + 1},${s.ty}`, s)
+    return s
+  }
+
+  removeStation (s) {
+    this.stations.splice(this.stations.indexOf(s), 1)
+    this.grid.delete(`${s.tx},${s.ty}`)
+    s.destroy()
   }
 
   buildMap () {
@@ -81,20 +105,18 @@ export default class GameScene extends Phaser.Scene {
           return
         }
         this.add.image(c.x, c.y, tx <= KITCHEN_MAX_COL ? 'floor_k' : 'floor_d').setDepth(0)
-        if (CRATES[ch]) this.stations.push(new Crate(this, tx, ty, CRATES[ch]))
-        else if (ch === 'G') this.stations.push(new Grill(this, tx, ty))
-        else if (ch === 'g') this.stations.push(this.spare = new Counter(this, tx, ty))
-        else if (ch === 'C') this.stations.push(new Board(this, tx, ty))
-        else if (ch === 'c') this.stations.push(new Counter(this, tx, ty))
-        else if (ch === '=') this.stations.push(new Counter(this, tx, ty, 'pass'))
-        else if (ch === 'K') this.stations.push(this.plateStack = new PlateStack(this, tx, ty))
+        if (CRATES[ch]) this.addStation(new Crate(this, tx, ty, CRATES[ch]))
+        else if (ch === 'G') this.addStation(new Grill(this, tx, ty))
+        else if (ch === 'g') this.spare = this.addStation(new Counter(this, tx, ty))
+        else if (ch === 'C') this.addStation(new Board(this, tx, ty))
+        else if (ch === 'c') this.addStation(new Counter(this, tx, ty))
+        else if (ch === '=') this.addStation(new Counter(this, tx, ty, 'pass'))
+        else if (ch === 'K') this.plateStack = this.addStation(new PlateStack(this, tx, ty))
         else if (ch === 'S') sinks.push([tx, ty])
-        else if (ch === 'X') this.stations.push(new Bin(this, tx, ty))
-        else if (ch === 'T') {
-          const t = new Table(this, tx, ty, ++tableNo)
-          this.tables.push(t)
-          this.stations.push(t)
-        } else if (ch === 'Q') this.queueSpots.push(c)
+        else if (ch === 'X') this.addStation(new Bin(this, tx, ty))
+        else if (ch === 'F') this.addStation(new Hook(this, tx, ty))
+        else if (ch === 'T') this.tables.push(this.addStation(new Table(this, tx, ty, ++tableNo)))
+        else if (ch === 'Q') this.queueSpots.push(c)
         else if (ch === 'E') {
           this.entrance = c
           this.addSolid(c.x, c.y)
@@ -106,8 +128,7 @@ export default class GameScene extends Phaser.Scene {
       })
     })
     sinks.forEach(([tx, ty]) => {
-      this.sink = new Sink(this, tx, ty, this.plateStack)
-      this.stations.push(this.sink)
+      this.sink = this.addStation(new Sink(this, tx, ty, this.plateStack))
     })
     this.tables.forEach(t => t.setOpen(false))
     // Front of the queue is the spot nearest the entrance.
@@ -127,7 +148,7 @@ export default class GameScene extends Phaser.Scene {
       this.scene.launch('DraftScene', {
         onPick: () => {
           this.scene.resume()
-          this.players.forEach(p => { p.input.update(); p.input.update() })
+          this.primeInputs()
           this.refreshModifiers()
           this.startWave(cfg)
         }
@@ -149,7 +170,6 @@ export default class GameScene extends Phaser.Scene {
     this.tables.forEach((t, i) => t.setOpen(t.open || i < cfg.tables))
     banner(this, cfg.endless ? 'CLOSING TIME' : `WAVE ${n}`, `${cfg.name} - ${cfg.tag}`)
     sfx('wave')
-    this.hint.setText(n <= 2 ? 'COOK: BUN+GRILLED PATTY ON A PLATE > PASS   SERVER: SEAT>ORDER>SERVE>BUS' : '')
     bus.emit('wave_started', { wave: n, config: cfg })
   }
 
@@ -215,6 +235,7 @@ export default class GameScene extends Phaser.Scene {
     this.waveActive = false
     const n = RunState.wave
     RunState.wavesCleared = n
+    RunState.calm = false
     bus.emit('wave_cleared', { wave: n })
     sfx('wave')
     if (n === WIN_WAVE) {
@@ -222,7 +243,35 @@ export default class GameScene extends Phaser.Scene {
     } else {
       banner(this, `WAVE ${n} CLEAR`, `TIPS $${RunState.tips}`, '#7ed957')
     }
-    this.time.delayedCall(n === WIN_WAVE ? 3200 : 2600, () => this.nextWave())
+    this.time.delayedCall(n === WIN_WAVE ? 3200 : 2600, () => this.betweenWaves())
+  }
+
+  // Shop opens after every wave from wave 2 on, then any draft, then the wave.
+  betweenWaves () {
+    if (RunState.wave < 2) {
+      this.nextWave()
+      return
+    }
+    this.scene.launch('ShopScene', {
+      onDone: () => {
+        this.scene.resume()
+        this.primeInputs()
+        this.syncPlates()
+        this.nextWave()
+      }
+    })
+    this.scene.pause()
+  }
+
+  syncPlates () {
+    while (this.platesGranted < RunState.bonusPlates) {
+      this.plateStack.addPlate()
+      this.platesGranted++
+    }
+  }
+
+  primeInputs () {
+    this.players.forEach(p => { p.input.update(); p.input.update() })
   }
 
   // --- service -------------------------------------------------------------
@@ -260,16 +309,18 @@ export default class GameScene extends Phaser.Scene {
   }
 
   deliver (c, player) {
-    const dish = plateDish(player.item)
-    if (dish !== c.order) {
+    const hand = ['item', 'extra'].find(k => plateDish(player[k]) === c.order)
+    if (!hand) {
       sfx('error')
       shake(this)
       player.input.rumble(250, 0.8, 0.5)
       floatText(this, c.pos.x, c.pos.y - 40, 'WRONG!', '#ff4040')
       return true
     }
-    const served = player.item
-    player.setItem(null)
+    const both = !!(player.item && player.extra)
+    const served = player[hand]
+    if (hand === 'item') player.setItem(null)
+    else player.setExtra(null)
     c.table.itemView.setItem(served)
     bus.emit('order_closed', { order: c.ticket, served: true })
     c.ticket = null
@@ -277,12 +328,13 @@ export default class GameScene extends Phaser.Scene {
     c.eatTimer = TUNING.eatTime
 
     const speed = TUNING.speedTip * c.ratio
-    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * (c.critic ? CRITIC.tipMult : 1))
+    const octo = both ? TUNING.octoBonus : 0
+    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * (c.critic ? CRITIC.tipMult : 1)) + octo
     RunState.tips += tip
     RunState.served++
     this.waveServed++
     bus.emit('tip_earned', { amount: tip, x: c.pos.x, y: c.pos.y })
-    floatText(this, c.pos.x, c.pos.y - 40, `+$${tip}`)
+    floatText(this, c.pos.x, c.pos.y - 40, octo ? `+$${tip} OCTO!` : `+$${tip}`)
     this.hud.bumpTips()
     sfx('tip')
     return true
@@ -340,6 +392,91 @@ export default class GameScene extends Phaser.Scene {
     floatText(this, grill.x, grill.y - 24, 'BURNT!', '#ff4040')
   }
 
+  get fireEnabled () {
+    return !!(this.waveCfg && this.waveCfg.fire)
+  }
+
+  get fires () {
+    return this.stations.filter(s => s.onFire).length
+  }
+
+  onFire (grill) {
+    sfx('fire')
+    shake(this, 0.012, 300)
+    this.players.forEach(p => p.input.rumble(400, 1, 0.8))
+    floatText(this, grill.x, grill.y - 24, 'FIRE!', '#ff4040')
+    this.alarmTimer = 1
+  }
+
+  onFireOut (grill) {
+    sfx('fireOut')
+    floatText(this, grill.x, grill.y - 24, 'PHEW', '#7ed957')
+  }
+
+  // Ingredient Cannon: fire the held ingredient along the facing direction.
+  // It lands on the first station in the way that can take it, or in the
+  // other player's empty hands.
+  throwItem (p) {
+    const item = p.item
+    const fail = () => {
+      sfx('error')
+      floatText(this, p.feet.x, p.feet.y - 44, 'NO TARGET', '#8a8399')
+    }
+    if (!item || item.type !== 'ing') return fail()
+    const mate = this.players.find(o => o !== p)
+    const dir = p.facing.clone().normalize()
+    const sx = p.feet.x
+    const sy = p.feet.y - 6
+    let target = null
+    for (let d = 12; d <= TUNING.throwRange && !target; d += 6) {
+      const x = sx + dir.x * d
+      const y = sy + dir.y * d
+      if (!mate.item && Phaser.Math.Distance.Between(x, y, mate.feet.x, mate.feet.y - 6) < 14) {
+        target = mate
+        break
+      }
+      const tx = Math.floor(x / TILE)
+      const ty = Math.floor((y - MAP_TOP) / TILE)
+      const st = this.grid.get(`${tx},${ty}`)
+      if (st) target = st
+      else if (!MAP[ty] || '#E'.includes(MAP[ty][tx] || '#')) break
+    }
+    if (!target) return fail()
+
+    let view
+    if (target === mate) {
+      mate.setItem(item)
+      view = mate.itemView
+    } else {
+      if (!target.receive(item)) return fail()
+      view = target.itemView
+    }
+    p.setItem(null)
+    view.setVisible(false)
+    const end = target === mate ? { x: mate.feet.x, y: mate.feet.y - 30 } : { x: target.x, y: target.y - 6 }
+    const dist = Phaser.Math.Distance.Between(sx, sy - 24, end.x, end.y)
+    const shot = this.add.image(sx, sy - 24, ingredientTexture(item.id, item.state)).setDepth(9300)
+    const arc = { t: 0 }
+    this.tweens.add({
+      targets: arc,
+      t: 1,
+      duration: Math.max(160, dist * 1.4),
+      onUpdate: () => {
+        shot.setPosition(
+          Phaser.Math.Linear(sx, end.x, arc.t),
+          Phaser.Math.Linear(sy - 24, end.y, arc.t) - Math.sin(arc.t * Math.PI) * 24
+        )
+        shot.setAngle(arc.t * 720)
+      },
+      onComplete: () => {
+        shot.destroy()
+        view.setVisible(true)
+        sfx('drop')
+      }
+    })
+    sfx('throw')
+  }
+
   runOver () {
     if (this.over) return
     this.over = true
@@ -388,16 +525,15 @@ export default class GameScene extends Phaser.Scene {
       if (!ok) sfx('error')
     }
     if (target && p.input.held('use')) target.use(p, dt)
+    if (p.role === 'cook' && RunState.has('cannon') && p.input.pressed('throw')) this.throwItem(p)
   }
 
   updateModifiers (dt) {
     if (RunState.has('grill') && this.spare && !this.spare.item) {
       const { tx, ty } = this.spare
-      this.stations.splice(this.stations.indexOf(this.spare), 1)
-      this.spare.destroy()
+      this.removeStation(this.spare)
       this.spare = null
-      const g = new Grill(this, tx, ty)
-      this.stations.push(g)
+      const g = this.addStation(new Grill(this, tx, ty))
       floatText(this, g.x, g.y - 20, 'GRILL #2', '#00ffd0')
     }
     if (RunState.has('busboy')) {
@@ -414,27 +550,99 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  togglePause () {
-    this.paused = !this.paused
-    this.pauseText.setVisible(this.paused)
-    if (this.paused) {
+  updateHint (fires) {
+    if (fires) {
+      const blink = Math.floor(this.time.now / 300) % 2 === 0
+      this.hint.setText('FIRE! GRAB THE RED EXTINGUISHER AND HOLD X ON THE GRILL').setColor(blink ? '#ff4040' : '#ffd93d')
+    } else {
+      this.hint.setText((this.waveCfg && this.waveCfg.hint) || '').setColor('#8a8399')
+    }
+  }
+
+  setPaused (on) {
+    this.paused = on
+    if (on) {
       this.physics.pause()
       this.tweens.pauseAll()
       this.time.paused = true
+      this.players.forEach(p => p.body.setVelocity(0, 0))
     } else {
       this.physics.resume()
       this.tweens.resumeAll()
       this.time.paused = false
+      this.overlay.hide()
     }
+  }
+
+  openPauseMenu () {
+    this.setPaused(true)
+    sfx('pause')
+    this.overlay.showMenu({
+      resume: () => this.setPaused(false),
+      restart: () => {
+        RunState.reset()
+        this.scene.restart()
+      },
+      quit: () => this.scene.start('LobbyScene')
+    })
+  }
+
+  // A pad that drops out pauses the game until that role gets a pad or the keyboard back.
+  checkLostPads () {
+    const lost = this.players.find(p => p.input.padLost)
+    if (!lost) return false
+    this.lostRole = lost.role
+    this.setPaused(true)
+    sfx('error')
+    this.overlay.showLost(lost.role, lost.role === 'cook' ? 'SPACE' : 'ENTER')
+    return true
+  }
+
+  onPadDown (pad, button) {
+    if (!this.lostRole || button.index !== PAD.A) return
+    const other = this.players.find(p => p.role !== this.lostRole)
+    if (other.input.padIndex === pad.index) return
+    this.rebind(this.lostRole, pad.index)
+  }
+
+  rebind (role, padIndex) {
+    const player = this.players.find(p => p.role === role)
+    player.input.padIndex = padIndex
+    this.registry.set('bindings', { ...(this.registry.get('bindings') || {}), [role]: padIndex })
+    this.lostRole = null
+    this.setPaused(false)
+    this.primeInputs()
+    sfx('confirm')
+  }
+
+  updatePaused () {
+    if (this.lostRole) {
+      const p = this.players.find(pl => pl.role === this.lostRole)
+      if (p.input.pressed('interact')) this.rebind(this.lostRole, null)
+      return
+    }
+    const inputs = this.players.map(p => p.input)
+    if (inputs.some(i => i.pressed('pause') || i.pressed('back'))) {
+      this.setPaused(false)
+      return
+    }
+    this.overlay.menu.handle(inputs)
   }
 
   update (time, delta) {
     const dt = Math.min(delta / 1000, 0.05)
     this.players.forEach(p => p.input.update())
-    if (!this.over && this.players.some(p => p.input.pressed('pause'))) this.togglePause()
-    if (this.paused) return
+    if (this.paused) {
+      this.updatePaused()
+      return
+    }
     if (this.over) {
       this.players.forEach(p => p.body.setVelocity(0, 0))
+      return
+    }
+    if (this.checkLostPads()) return
+    if (this.players.some(p => p.input.pressed('pause'))) {
+      this.openPauseMenu()
       return
     }
 
@@ -442,8 +650,18 @@ export default class GameScene extends Phaser.Scene {
     this.players.forEach(p => this.updatePlayer(p, dt))
     this.stations.forEach(s => s.update(dt))
 
+    const fires = this.fires
+    const drain = fires ? TUNING.fireDrain : 1
+    if (fires) {
+      this.alarmTimer -= dt
+      if (this.alarmTimer <= 0) {
+        sfx('fire')
+        this.alarmTimer = 1.2
+      }
+    }
+
     this.customers.slice().forEach(c => {
-      const expired = c.update(dt, c.state === 'following' ? this.server : null)
+      const expired = c.update(dt, c.state === 'following' ? this.server : null, drain)
       if (expired && !this.over) this.leave(c, true)
       else if (c.state === 'eating' && c.eatTimer <= 0) {
         c.table.setDirty(true)
@@ -454,6 +672,7 @@ export default class GameScene extends Phaser.Scene {
     this.updateModifiers(dt)
     this.checkWaveCleared()
     this.hud.update()
+    this.updateHint(fires)
     this.rail.update()
   }
 }

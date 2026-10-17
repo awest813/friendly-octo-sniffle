@@ -273,6 +273,16 @@ export const ICONS = {
     '.kkkkkk.',
     '..kkkk..'
   ], { k: '#2b2b3a', g: '#6b6b7a', y: '#ffd93d' }],
+  tool_extinguisher: [[
+    '...kk...',
+    '..kggk..',
+    '.kkrrkk.',
+    '.krwrrk.',
+    '.krrrrk.',
+    '.krrrrk.',
+    '.kRRRRk.',
+    '..kkkk..'
+  ], { k: OUTLINE, r: '#e8402f', R: '#a8261c', w: '#ff9b8a', g: '#aab3c5' }],
   heart: 'pu_charm',
   heart_empty: [[
     '.kk.kk..',

@@ -58,6 +58,12 @@ const SOUNDS = {
   wash: () => noise(0, 0.25, 0.3, 1500),
   select: () => tone(660, 0, 0.05, 'square', 0.4),
   confirm: () => { tone(523, 0, 0.08, 'square', 0.5); tone(784, 0.08, 0.14, 'square', 0.5) },
+  spray: () => noise(0, 0.18, 0.35, 6000),
+  fire: () => { tone(880, 0, 0.12, 'square', 0.5); tone(660, 0.14, 0.12, 'square', 0.5) },
+  fireOut: () => { noise(0, 0.4, 0.4, 7000); tone(523, 0.1, 0.1, 'triangle', 0.6, 1046) },
+  throw: () => noise(0, 0.22, 0.4, 1800),
+  buy: () => { tone(1047, 0, 0.06, 'square', 0.5); tone(1319, 0.06, 0.06, 'square', 0.5); tone(2093, 0.12, 0.1, 'square', 0.4) },
+  pause: () => tone(440, 0, 0.08, 'triangle', 0.6),
   wave: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, 'square', 0.45))
 }
 

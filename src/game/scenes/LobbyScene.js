@@ -1,14 +1,14 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, COLORS, CSS, FONT } from '@/game/constants'
-import { PAD } from '@/game/input/PlayerInput'
+import { PAD, nativePadConnected } from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
 import { initSfx, sfx } from '@/game/audio/sfx'
 
 const ROLES = ['cook', 'server']
 
 const INFO = {
-  cook: { title: 'COOK', color: CSS.cook, tint: COLORS.cook, x: 200, keys: 'KEYS: WASD + SPACE / E' },
-  server: { title: 'SERVER', color: CSS.server, tint: COLORS.server, x: 440, keys: 'KEYS: ARROWS + ENTER / SHIFT' }
+  cook: { title: 'COOK', color: CSS.cook, tint: COLORS.cook, x: 200, keys: 'KEYS: WASD, SPACE, E, Q' },
+  server: { title: 'SERVER', color: CSS.server, tint: COLORS.server, x: 440, keys: 'KEYS: ARROWS, ENTER, SHIFT' }
 }
 
 // First pad to press A is the Cook, second is the Server. Keyboard joins as a fallback.
@@ -55,9 +55,7 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   padAlive (index) {
-    if (index === null || index === undefined || !this.input.gamepad) return false
-    const pad = this.input.gamepad.getPad(index)
-    return !!(pad && pad.connected)
+    return nativePadConnected(index)
   }
 
   ready (role) {
@@ -125,7 +123,7 @@ export default class LobbyScene extends Phaser.Scene {
   }
 
   update () {
-    const n = this.input.gamepad ? this.input.gamepad.getAll().filter(p => p.connected).length : 0
+    const n = this.input.gamepad ? this.input.gamepad.getAll().filter(p => nativePadConnected(p.index)).length : 0
     this.pads.setText(n ? `${n} GAMEPAD${n > 1 ? 'S' : ''} CONNECTED` : 'NO GAMEPAD? PRESS A BUTTON ON IT, OR USE SPACE / ENTER')
     this.prompt.setAlpha(this.bothReady() ? 0.6 + 0.4 * Math.sin(this.time.now / 150) : 1)
   }

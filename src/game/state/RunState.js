@@ -9,6 +9,8 @@ const RunState = {
     this.served = 0
     this.angry = 0
     this.modifiers = new Set()
+    this.bonusPlates = 0
+    this.calm = false
   },
 
   has (id) {
@@ -16,7 +18,9 @@ const RunState = {
   },
 
   patienceMult () {
-    return this.has('charm') ? 1.3 : 1
+    let m = this.has('charm') ? 1.3 : 1
+    if (this.calm) m *= 1.2
+    return m
   },
 
   tipMult () {
@@ -28,6 +32,16 @@ const RunState = {
 
   speedMult (role) {
     return role === 'server' && this.has('skates') ? 1.4 : 1
+  },
+
+  price (base) {
+    return Math.round(base * (this.has('tips') ? 1.2 : 1))
+  },
+
+  spend (amount) {
+    if (this.tips < amount) return false
+    this.tips -= amount
+    return true
   }
 }
 

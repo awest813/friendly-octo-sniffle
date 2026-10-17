@@ -76,7 +76,7 @@ export default class Customer {
   }
 
   // Returns true when patience just ran out.
-  update (dt, leader) {
+  update (dt, leader, drain = 1) {
     if (this.state === 'following' && leader) {
       const c = leader.crumb(FOLLOW_GAP)
       this.stepTowards(c.x, c.y, WALK_SPEED * 2.2, dt)
@@ -94,7 +94,7 @@ export default class Customer {
 
     let expired = false
     if (this.ticking) {
-      this.patience -= dt
+      this.patience -= dt * drain
       expired = this.patience <= 0
     }
     if (this.state === 'eating') this.eatTimer -= dt

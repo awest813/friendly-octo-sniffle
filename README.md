@@ -17,8 +17,10 @@ the second becomes the Server.
 |---|---|---|---|
 | Move | Left stick / D-pad | WASD | Arrow keys |
 | Pick up / put down / greet / seat / order / deliver | A | Space | Enter |
-| Chop (hold, at a board) | X | E | Shift |
-| Pause | Start | Esc | Esc |
+| Use (hold): chop at a board, spray the extinguisher | X | E | Shift |
+| Throw (with Ingredient Cannon) / reroll the draft | Y | Q | / |
+| Back / leave the shop | B | Backspace | Backspace |
+| Pause menu | Start | Esc | Esc |
 
 The keyboard controls are a fallback for testing, or for playing with only one pad.
 
@@ -29,7 +31,11 @@ The keyboard controls are a fallback for testing, or for playing with only one p
   board and hold X.
 - **Server:** greet the customer at the front of the queue, lead them to a free table, take their order, carry
   the right plate from the pass, then bring the dirty plate back to the sink in the kitchen.
+- From wave 5, burnt food left on the grill catches fire. Grab the red extinguisher and hold X on the grill.
+  While anything is burning, every customer loses patience faster.
+- After each wave from wave 2, the shop sells lives, plates and calm music for tips. Tips are also your score.
 - Three angry walkouts and the run is over.
+- If a pad disconnects, the game pauses until that role presses A on a pad or takes over on the keyboard.
 
 ## Development
 
@@ -52,8 +58,8 @@ src/game/
 ├─ state/     signal bus + run state
 ├─ entities/  players, customers, items
 ├─ stations/  crates, boards, grills, counters, plates, sink, bin, tables
-├─ ui/        HUD, ticket rail, effects
-└─ scenes/    Boot → Lobby → Game (+ Draft overlay) → GameOver
+├─ ui/        HUD, ticket rail, menus, pause overlay, effects
+└─ scenes/    Boot → Lobby → Game (+ Shop, Draft overlays) → GameOver
 ```
 
 Started from the [vue-phaser3](https://github.com/Sun0fABeach/vue-phaser3) template (MIT).

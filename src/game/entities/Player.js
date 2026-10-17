@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { TUNING, COLORS } from '@/game/constants'
-import { ItemView } from '@/game/entities/items'
+import { ItemView, isPlate } from '@/game/entities/items'
 import RunState from '@/game/state/RunState'
 
 const TRAIL_STEP = 3
@@ -13,6 +13,7 @@ export default class Player {
     this.input = input
     this.color = role === 'cook' ? COLORS.cook : COLORS.server
     this.item = null
+    this.extra = null // second plate, Octo-Tray only
     this.facing = new Phaser.Math.Vector2(0, 1)
     this.target = null
     this.trail = []
@@ -24,6 +25,7 @@ export default class Player {
     this.body.setCollideWorldBounds(true)
     this.shadow = scene.add.image(x, y, 'shadow')
     this.sprite = scene.add.image(x, y, role).setOrigin(0.5, 1)
+    this.extraView = new ItemView(scene, x, y)
     this.itemView = new ItemView(scene, x, y)
     this.highlight = scene.add.image(0, 0, 'highlight').setTint(this.color).setVisible(false).setDepth(9000)
     this.tag = scene.add.text(x, y, role === 'cook' ? 'P1' : 'P2', {
@@ -35,13 +37,34 @@ export default class Player {
     return this.body.body.center
   }
 
+  // Emptying the hands promotes the Octo-Tray plate, if any.
   setItem (item) {
+    if (!item && this.extra) {
+      item = this.extra
+      this.extra = null
+    }
     this.item = item
-    this.itemView.setItem(item)
+    this.refreshItem()
   }
 
   refreshItem () {
-    this.itemView.refresh()
+    this.itemView.setItem(this.item)
+    this.extraView.setItem(this.extra)
+  }
+
+  canStack (item) {
+    return this.role === 'server' && RunState.has('octo') && !this.extra && isPlate(this.item) && isPlate(item)
+  }
+
+  stack (item) {
+    this.extra = this.item
+    this.item = item
+    this.refreshItem()
+  }
+
+  setExtra (item) {
+    this.extra = item
+    this.refreshItem()
   }
 
   update (dt) {
@@ -67,8 +90,10 @@ export default class Player {
     const bob = moving ? Math.abs(Math.sin(this.bobTime)) * -2 : 0
     this.sprite.setPosition(feet.x, feet.y + 5 + bob).setDepth(feet.y)
     this.shadow.setPosition(feet.x, feet.y + 4).setDepth(feet.y - 1)
-    this.itemView.setPosition(feet.x, feet.y - 30 + bob).setDepth(feet.y + 0.5)
-    this.tag.setPosition(feet.x, feet.y - (this.item ? 40 : 26) + bob)
+    const dx = this.extra ? 5 : 0
+    this.extraView.setPosition(feet.x - 5, feet.y - 27 + bob).setDepth(feet.y + 0.4)
+    this.itemView.setPosition(feet.x + dx, feet.y - 30 - dx + bob).setDepth(feet.y + 0.5)
+    this.tag.setPosition(feet.x, feet.y - (this.item ? 40 + dx : 26) + bob)
   }
 
   // Point slightly ahead of the player, used to pick an interaction target.

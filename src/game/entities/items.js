@@ -3,10 +3,14 @@ import { INGREDIENTS, RECIPES, matchRecipe, canAddToPlate } from '@/game/data/re
 
 export const ingredient = (id, state = 'raw') => ({ type: 'ing', id, state })
 export const plate = (dirty = false) => ({ type: 'plate', contents: [], dirty })
+export const tool = id => ({ type: 'tool', id })
 
 export const isPlate = item => !!item && item.type === 'plate'
 export const isCleanPlate = item => isPlate(item) && !item.dirty
 export const isDirtyPlate = item => isPlate(item) && item.dirty
+export const isTool = (item, id) => !!item && item.type === 'tool' && (!id || item.id === id)
+// A plate with food on it, i.e. something a customer could be served.
+export const isServable = item => isCleanPlate(item) && item.contents.length > 0
 
 export function isPlateReady (item) {
   return !!item && item.type === 'ing' && INGREDIENTS[item.id].plateReady === item.state
@@ -57,6 +61,10 @@ export class ItemView extends Phaser.GameObjects.Container {
     if (!item) return this
     if (item.type === 'ing') {
       this.add(this.scene.add.image(0, 0, ingredientTexture(item.id, item.state)))
+      return this
+    }
+    if (item.type === 'tool') {
+      this.add(this.scene.add.image(0, 0, `tool_${item.id}`))
       return this
     }
     this.add(this.scene.add.image(0, 0, item.dirty ? 'plate_dirty' : 'plate'))

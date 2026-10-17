@@ -147,7 +147,17 @@ function buildTiles (scene) {
     px(0, 15, 4, 1, c); px(0, 12, 1, 4, c)
     px(12, 15, 4, 1, c); px(15, 12, 1, 4, c)
   })
+  tileTexture(scene, 'hook', px => {
+    counterBase(px)
+    px(1, 11, 14, 4, '#a8261c')
+    px(1, 11, 14, 1, '#e8402f')
+    px(5, 3, 6, 6, '#c5ccda')
+    px(6, 4, 4, 4, '#9aa3b5')
+  })
   tileTexture(scene, 'px', px => px(0, 0, 1, 1, '#ffffff'), 1, 1)
+  tileTexture(scene, 'flame', px => {
+    px(1, 0, 1, 1, '#ffffff'); px(0, 1, 3, 2, '#ffffff'); px(1, 3, 1, 1, '#ffffff')
+  }, 3, 4)
   tileTexture(scene, 'smoke', px => {
     px(1, 0, 2, 4, '#ffffff'); px(0, 1, 4, 2, '#ffffff')
   }, 4, 4)

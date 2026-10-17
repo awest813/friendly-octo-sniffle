@@ -46,12 +46,14 @@ Standard-mapping pads (Xbox / PlayStation / Switch Pro in browser). The two
 |---|---|---|---|
 | Move (8-dir, analog) | Left stick / D-pad | WASD | Arrow keys |
 | Interact: pick up / put down / greet / seat / take order / deliver | **A** (Cross) | Space | Enter |
-| Use (hold): chop on a board | **X** (Square) | E | Shift |
-| Pause | Start (Options) | Esc | Esc |
+| Use (hold): chop on a board, spray the extinguisher | **X** (Square) | E | Shift |
+| Throw (Ingredient Cannon), reroll in the draft | **Y** (Triangle) | Q | / |
+| Back: leave the shop / close the pause menu | **B** (Circle) | Backspace | Backspace |
+| Pause menu (resume / restart run / quit to lobby) | Start (Options) | Esc | Esc |
 | Lobby: join / ready | A / Start | Space | Enter |
 
 - **Rumble** (`vibrationActuator`, where the browser supports it) on: wrong delivery, burnt food, angry customer, life lost. Every rumble also triggers a screen shake, so keyboard players get the same feedback.
-- Pad disconnects pause the game until a pad presses A again for that role.
+- A pad disconnecting pauses the game. That role resumes by pressing A on the same pad after it's plugged back in, on any other free pad, or on its keyboard key (Space/Enter).
 - Keyboard fallback exists so one person can test alone, or so a group with only one pad can still play (pad + keyboard).
 
 ## 3. Roles
@@ -96,7 +98,7 @@ the endless wave 9.
 | 2 | Lunch Rush | 5 | 3 | 35 s | +salad | — |
 | 3 | First Draft | 6 | 3 | 32 s | burger, salad | **Draft #1 before the wave** |
 | 4 | Double Booked | 8 | 4 | 30 s | +deluxe | customers arrive in pairs |
-| 5 | Fire in the Kitchen (mid-boss) | 8 | 4 | 28 s | all | burnt food left on the grill catches fire *(planned)* |
+| 5 | Fire in the Kitchen (mid-boss) | 8 | 4 | 28 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) |
 | 6 | Second Draft | 9 | 5 | 26 s | all | **Draft #2 before the wave** |
 | 7 | VIP Food Critic | 9 | 5 | 26 s | all | 2 critics: 15 s patience, ×3 tips |
 | 8 | Full House | 12 | 6 | 24 s | all | fast pairs |
@@ -104,7 +106,18 @@ the endless wave 9.
 
 - **Clearing wave 8 = the diner is saved (run counts as a win).** Wave 9 is a score chase until lives run out.
 - The draft is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
-- **Shop** *(planned, from wave 3)*: between waves, spend tips on: reroll the draft ($15), restore a life ($30), extra plate ($10). This makes tips matter beyond score.
+- Every wave starts with a one-line hint on the bottom wall introducing what's new.
+- **Fire (waves 5+):** a burnt patty left on the grill for 3 s bursts into flames. The burning grill is unusable and nothing can be taken off it. While anything burns, **every customer loses patience 1.5× faster**. Fix: take the extinguisher from its red hook and hold X on the grill for 1.2 s.
+- **Shop (after every wave from wave 2):** tips are your score *and* your currency.
+
+  | Item | Price | Effect |
+  |---|---|---|
+  | +1 Life | $30 | Back up to the 3-life cap |
+  | +1 Plate | $12 | Up to 7 plates total |
+  | Calm Music | $20 | Next wave only: patience +20% |
+  | Draft reroll | $15 | In the draft (Y): three new options |
+
+  Bigger Tips raises all prices by 20%.
 
 ## 6. Power-ups (draft pool)
 
@@ -119,10 +132,8 @@ Power-ups are **modifiers, not new systems**: they read from `RunState.modifiers
 | Double Grill 🔥 | Cook | Rare | Spare kitchen counter becomes a second grill | ✅ |
 | Ghost Pan 👻 | Cook | Rare | Grills never burn food | ✅ |
 | Robot Busboy 🤖 | Diner | Epic | Auto-clears one dirty table every 12 s | ✅ |
-| Octo-Tray 🐙 | Server | Rare | Carry 2 plates (stacked) — risky, +$2 per double delivery | planned |
-| Ingredient Cannon 💥 | Cook | Epic | Throw held item in facing direction onto the nearest counter | planned |
-
-Only implemented power-ups go into the draft pool.
+| Octo-Tray 🐙 | Server | Rare | Carry 2 plates. Serving while holding both = +$2 | ✅ |
+| Ingredient Cannon 💥 | Cook | Epic | Y throws the held ingredient in the facing direction. It lands on the first station that can take it (counter, board, grill, a plate, the bin) or in the Server's empty hands; if nothing can, the Cook keeps it | ✅ |
 
 ## 7. Architecture (Phaser)
 
@@ -138,9 +149,9 @@ src/
    ├─ input/PlayerInput.js   gamepad-first input with keyboard fallback + rumble
    ├─ state/                 bus.js (signal bus), RunState.js (lives/tips/wave/modifiers)
    ├─ entities/              Player, Customer, items
-   ├─ stations/              Crate, Counter, Board, Grill, PlateStack, Sink, Bin, Table
-   ├─ ui/                    Hud, TicketRail, fx
-   └─ scenes/                Boot → Lobby → Game (+ Draft overlay) → GameOver
+   ├─ stations/              Crate, Counter, Hook, Board, Grill, PlateStack, Sink, Bin, Table
+   ├─ ui/                    Hud, TicketRail, Menu, PauseOverlay, fx
+   └─ scenes/                Boot → Lobby → Game (+ Shop, Draft overlays) → GameOver
 ```
 
 **Signal bus** (`state/bus.js`): `order_taken`, `order_done`, `tip_earned`,
@@ -161,7 +172,7 @@ Godot → Phaser mapping used:
 
 ## 8. Build checklist
 
-**Slice 1 — playable loop (this commit)**
+**Slice 1 — playable loop**
 - [x] 640×360 viewport, pixel art, pixel font
 - [x] Lobby: claim Cook/Server by pad (keyboard fallback)
 - [x] Map from ASCII: walls, kitchen, dining room, doorway, pass counters
@@ -173,13 +184,19 @@ Godot → Phaser mapping used:
 - [x] Draft pick (3 of pool) before waves 3 and 6
 - [x] Juice: tip pop, screen shake, rumble, synth SFX, smoke particles
 
-**Slice 2 — next**
-- [ ] Wave 5 fire (burnt-on-grill → fire → extinguisher)
-- [ ] Shop between waves
-- [ ] Octo-Tray, Ingredient Cannon
+**Slice 2 — depth**
+- [x] Fire from wave 5: burnt-on-grill → fire → extinguisher, patience drain while burning
+- [x] Shop between waves (life, plate, calm music) + paid draft reroll
+- [x] Octo-Tray, Ingredient Cannon (all 9 power-ups live)
+- [x] Pause menu (resume / restart / quit) and pad-disconnect pause with rebinding
+- [x] Per-wave hint line
+
+**Slice 3 — next**
+- [ ] Real playtest on two pads and balance pass on wave 4–8 numbers
 - [ ] Chop timing mini-game (hit X in the sweet spot for a speed bonus)
-- [ ] Pause menu + pad-disconnect handling UI
+- [ ] Ticket rail sorting by urgency, critic tickets highlighted
 - [ ] Real art pass, music
+- [ ] Local high-score table (tips) per run
 
 ## Changes from v0.9
 
@@ -191,7 +208,7 @@ Godot → Phaser mapping used:
 | "9 waves to close" and "wave 9 endless" | Contradiction | Clear 8 = win; wave 9 = endless score chase |
 | "+15% per wave" and hand-designed waves | Contradiction | Hand-authored 1–8; +15% steps only in endless |
 | Wave 2 patience 35 s > 30 s base | Lunch rush easier than the base | Patience curve 45 → 24 s, critics 15 s |
-| "Shop unlocks" at wave 3, but no shop design | Tips had no use | Shop defined (slice 2); tips also = score |
+| "Shop unlocks" at wave 3, but no shop design | Tips had no use | Shop after every wave from wave 2; tips are both currency and score |
 | Cook "kitchen locked" but free WASD movement | Unclear | Cook moves freely *inside* the kitchen; doorway blocks only the Cook |
 | Camera lerps to players' midpoint | Unnecessary on one screen; can push a player off-screen | Fixed camera |
 | Godot 4.3 project tree / prompts | Repo is Phaser | Phaser architecture (§7) |

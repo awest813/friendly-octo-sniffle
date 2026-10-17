@@ -43,5 +43,19 @@ export const TUNING = {
   queueSize: 4,
   busboyInterval: 12,
   endlessStep: 4,
-  endlessScale: 1.15
+  endlessScale: 1.15,
+  fireDelay: 3,
+  extinguishTime: 1.2,
+  fireDrain: 1.5,
+  octoBonus: 2,
+  throwRange: 300,
+  maxPlates: 7
+}
+
+// Between-wave shop. Prices go up 20% with Bigger Tips.
+export const SHOP = {
+  life: 30,
+  plate: 12,
+  calm: 20,
+  reroll: 15
 }

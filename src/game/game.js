@@ -4,6 +4,7 @@ import BootScene from '@/game/scenes/BootScene'
 import LobbyScene from '@/game/scenes/LobbyScene'
 import GameScene from '@/game/scenes/GameScene'
 import DraftScene from '@/game/scenes/DraftScene'
+import ShopScene from '@/game/scenes/ShopScene'
 import GameOverScene from '@/game/scenes/GameOverScene'
 import RunState from '@/game/state/RunState'
 
@@ -29,7 +30,7 @@ function launch (containerId) {
         debug: false
       }
     },
-    scene: [BootScene, LobbyScene, GameScene, DraftScene, GameOverScene]
+    scene: [BootScene, LobbyScene, GameScene, DraftScene, ShopScene, GameOverScene]
   })
 }
 
