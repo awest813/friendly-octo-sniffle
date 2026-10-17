@@ -123,7 +123,15 @@ The design doc is in [`docs/GDD.md`](docs/GDD.md).
 folder.
 
 The included workflow (`.github/workflows/pages.yml`) builds every pull request and deploys `master`
-to GitHub Pages. One-time setup: in the repository settings, go to **Pages → Build and deployment →
-Source** and pick **GitHub Actions**.
+to GitHub Pages at https://awest813.github.io/friendly-octo-sniffle/.
+
+To go live:
+
+1. In the repository settings, go to **Pages → Build and deployment → Source** and pick
+   **GitHub Actions** (one time).
+2. Merge to `master`. The workflow builds and deploys; the site is up a minute later.
+3. To redeploy without a new commit, open **Actions → Build and deploy → Run workflow** on `master`.
+
+If the workflow fails at the `configure-pages` step with "Get Pages site failed", step 1 hasn't been done yet.
 
 Started from the [vue-phaser3](https://github.com/Sun0fABeach/vue-phaser3) template (MIT).

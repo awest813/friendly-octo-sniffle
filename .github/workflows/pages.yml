@@ -11,13 +11,17 @@ on:
 permissions:
   contents: read
 
+# One deploy at a time; PR builds of the same branch replace each other.
 concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,6 +30,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # Fails with a clear message if Pages isn't enabled for the repository.
+      - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
