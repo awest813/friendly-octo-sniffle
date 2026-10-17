@@ -56,6 +56,23 @@ const PAGES = [
     ]
   },
   {
+    title: 'GUESTS & TIPS',
+    color: CSS.diner,
+    icons: ['customer2', 'guest_granny', 'customer4', 'guest_rusher', 'critic', 'pu_tips'],
+    lines: [
+      'CHILL grandparents wait long and tip well.',
+      'KIDS eat fast, only want burgers, tip small.',
+      'RUSH guests are impatient but tip big.',
+      'VIP critics: gold tickets, triple tips.',
+      'A glittering BIG TIPPER turns up now and then.',
+      '',
+      'Serve fast for PERFECT, rescue a guest at the',
+      'last second for CLUTCH. Every serve in a row',
+      'grows your STREAK: up to +50% tips.',
+      'Clean waves earn up to 3 stars and bonus tips.'
+    ]
+  },
+  {
     title: 'CONTROLS',
     color: CSS.white,
     table: [
@@ -86,7 +103,7 @@ const PAGES = [
       'tip triple. Serve them first.',
       '',
       'Between waves: spend tips in the shop. Before',
-      'waves 3 and 6: draft a power-up. Y rerolls.'
+      'waves 3, 5 and 7: draft a power-up. Y rerolls.'
     ]
   }
 ]

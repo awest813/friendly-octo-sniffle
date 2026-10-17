@@ -3,7 +3,7 @@ import { WIDTH, HEIGHT, COLORS, CSS, FONT } from '@/game/constants'
 import { PAD, nativePadConnected } from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
 import { loadScores } from '@/game/state/scores'
-import Settings, { AI_SKILLS, saveSettings } from '@/game/state/settings'
+import Settings, { AI_SKILLS, DIFFICULTIES, saveSettings } from '@/game/state/settings'
 import { playMusic } from '@/game/audio/music'
 import { initSfx, sfx } from '@/game/audio/sfx'
 
@@ -58,6 +58,7 @@ export default class LobbyScene extends Phaser.Scene {
 
     this.prompt = this.add.text(WIDTH / 2, 330, '', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
     this.pads = this.add.text(WIDTH / 2, 348, '', { fontFamily: FONT, fontSize: '8px', color: CSS.dim }).setOrigin(0.5)
+    this.diffText = this.add.text(WIDTH / 2, 312, '', { fontFamily: FONT, fontSize: '8px', color: CSS.white }).setOrigin(0.5)
 
     if (this.input.gamepad) {
       this.input.gamepad.on('down', (pad, button) => this.onPad(pad, button.index))
@@ -67,6 +68,8 @@ export default class LobbyScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ESC', e => !e.repeat && this.back())
     this.input.keyboard.on('keydown-BACKSPACE', e => !e.repeat && this.back())
     this.input.keyboard.on('keydown-Q', e => !e.repeat && this.cycleSkill())
+    this.input.keyboard.on('keydown-E', e => !e.repeat && this.cycleDifficulty())
+    this.input.keyboard.on('keydown-SHIFT', e => !e.repeat && this.cycleDifficulty())
     this.input.keyboard.on('keydown-FORWARD_SLASH', e => !e.repeat && this.cycleSkill())
     this.refresh()
 
@@ -108,8 +111,21 @@ export default class LobbyScene extends Phaser.Scene {
     this.refresh()
   }
 
+  cycleDifficulty () {
+    if (this.settling) return
+    const list = Object.keys(DIFFICULTIES)
+    Settings.difficulty = list[(list.indexOf(Settings.difficulty) + 1) % list.length]
+    saveSettings()
+    sfx('select')
+    this.refresh()
+  }
+
   onPad (pad, button) {
     if (this.settling) return
+    if (button === PAD.X) {
+      this.cycleDifficulty()
+      return
+    }
     const role = this.roleOfPad(pad.index)
     if (button === PAD.B) {
       if (!role) {
@@ -172,6 +188,7 @@ export default class LobbyScene extends Phaser.Scene {
     if (this.bothReady()) prompt = 'PRESS A / START TO OPEN THE DINER'
     else if (this.anyReady()) prompt = `A AGAIN: PLAY WITH AI ${INFO[empty].title}  -  Y: AI SKILL`
     this.prompt.setText(prompt)
+    this.diffText.setText(`DIFFICULTY: ${Settings.difficulty}  (X TO CHANGE)`)
   }
 
   start (allBots = false) {

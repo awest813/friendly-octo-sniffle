@@ -25,24 +25,28 @@ export default class GameOverScene extends Phaser.Scene {
     this.add.text(WIDTH / 2, 68, sub, { fontFamily: FONT, fontSize: '8px', color: CSS.dim }).setOrigin(0.5)
 
     const waves = Math.min(RunState.wavesCleared, WIN_WAVE)
+    // Personal bests are about your own progress, compared with nobody else.
+    const prevBestStreak = loadScores().reduce((m, s) => Math.max(m, s.streak || 0), 0)
     const rows = [
       ['WAVES CLEARED', `${waves}/${WIN_WAVE}`],
-      ['CUSTOMERS SERVED', `${RunState.served}`],
-      ['ANGRY WALKOUTS', `${RunState.angry}`],
+      ['SERVED / PERFECT', `${RunState.served} / ${RunState.perfect}`],
+      ['BEST STREAK', `${RunState.bestStreak}`],
+      ['STARS EARNED', `${RunState.stars}`],
       ['TIPS', `$${RunState.tips}`]
     ]
     rows.forEach(([label, value], i) => {
-      const y = 94 + i * 18
+      const y = 86 + i * 16
       this.add.text(WIDTH / 2 - 150, y, label, { fontFamily: FONT, fontSize: '8px', color: CSS.white })
-      this.add.text(WIDTH / 2 + 150, y, value, { fontFamily: FONT, fontSize: '8px', color: i === 3 ? CSS.diner : CSS.cook }).setOrigin(1, 0)
+      this.add.text(WIDTH / 2 + 150, y, value, { fontFamily: FONT, fontSize: '8px', color: i === 4 ? CSS.diner : CSS.cook }).setOrigin(1, 0)
     })
+    const newStreak = RunState.bestStreak > prevBestStreak && RunState.bestStreak >= 3
 
     const bots = allBots(this.registry)
     const ai = this.registry.get('ai') || {}
     const mode = bots ? 'BOTS' : ai.cook || ai.server ? 'SOLO' : '2P'
-    const entry = { tips: RunState.tips, waves, mode }
+    const entry = { tips: RunState.tips, waves, mode, diff: RunState.difficulty, streak: RunState.bestStreak }
     const rank = bots ? -1 : addScore(entry)
-    this.drawScores(rank)
+    this.drawScores(rank, !bots && newStreak)
 
     this.prompt = this.add.text(WIDTH / 2, 330, 'A: PLAY AGAIN   -   B: MENU', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
     const bindings = this.registry.get('bindings') || {}
@@ -55,9 +59,12 @@ export default class GameOverScene extends Phaser.Scene {
     }
   }
 
-  drawScores (rank) {
-    if (rank >= 0) {
-      const t = this.add.text(WIDTH / 2, 180, `NEW HIGH SCORE #${rank + 1}!`, { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
+  drawScores (rank, newStreak) {
+    const callouts = []
+    if (rank >= 0) callouts.push(`NEW HIGH SCORE #${rank + 1}!`)
+    if (newStreak) callouts.push('NEW BEST STREAK!')
+    if (callouts.length) {
+      const t = this.add.text(WIDTH / 2, 180, callouts.join('   '), { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
       this.tweens.add({ targets: t, scale: { from: 1.3, to: 1 }, duration: 500, yoyo: true, repeat: -1 })
       sfx('tip')
     }
@@ -70,7 +77,7 @@ export default class GameOverScene extends Phaser.Scene {
       const y = 220 + i * 16
       const mine = i === rank
       const color = mine ? CSS.diner : CSS.white
-      this.add.text(WIDTH / 2 - 150, y, `${i + 1}. ${s.mode}`, { fontFamily: FONT, fontSize: '8px', color })
+      this.add.text(WIDTH / 2 - 150, y, `${i + 1}. ${s.mode}${s.diff && s.diff !== 'NORMAL' ? ' ' + s.diff : ''}`, { fontFamily: FONT, fontSize: '8px', color })
       this.add.text(WIDTH / 2 + 20, y, `WAVE ${s.waves}`, { fontFamily: FONT, fontSize: '8px', color }).setOrigin(0.5, 0)
       this.add.text(WIDTH / 2 + 150, y, `$${s.tips}`, { fontFamily: FONT, fontSize: '8px', color }).setOrigin(1, 0)
     })

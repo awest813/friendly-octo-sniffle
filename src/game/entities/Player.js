@@ -1,10 +1,16 @@
 import Phaser from 'phaser'
-import { TUNING, COLORS } from '@/game/constants'
+import { TUNING, COLORS, WIDTH } from '@/game/constants'
 import { ItemView, isPlate } from '@/game/entities/items'
 import RunState from '@/game/state/RunState'
 
 const TRAIL_STEP = 3
 const TRAIL_MAX = 160
+
+// Keyboard names for the two action buttons, per role.
+const KEY_NAMES = {
+  cook: { A: 'SPACE', X: 'E' },
+  server: { A: 'ENTER', X: 'SHIFT' }
+}
 
 export default class Player {
   constructor (scene, role, x, y, input) {
@@ -31,6 +37,35 @@ export default class Player {
     this.tag = scene.add.text(x, y, role === 'cook' ? 'P1' : 'P2', {
       fontFamily: '"Press Start 2P", monospace', fontSize: '8px', color: role === 'cook' ? '#00ffd0' : '#ff3b8d'
     }).setOrigin(0.5, 1).setDepth(9001)
+    this.promptText = scene.add.text(0, 0, '', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: role === 'cook' ? '#00ffd0' : '#ff3b8d',
+      backgroundColor: '#120f1add',
+      padding: { x: 3, y: 2 }
+    }).setOrigin(0.5, 1).setDepth(9600).setVisible(false)
+  }
+
+  buttonName (button) {
+    return this.input.pad ? button : KEY_NAMES[this.role][button]
+  }
+
+  // Context prompt over the current target, e.g. "A: GRAB BUN".
+  showPrompt (text, target) {
+    if (!text || !target) {
+      this.promptText.setVisible(false)
+      this.tag.setVisible(true)
+      return
+    }
+    // The prompt is in the player's colour, so it replaces the P1/P2 tag.
+    this.tag.setVisible(false)
+    const label = text.replace('{A}', `${this.buttonName('A')}:`).replace('{X}', `${this.buttonName('X')}:`)
+    const at = target.highlightAt()
+    if (this.promptText.text !== label) this.promptText.setText(label)
+    const half = this.promptText.width / 2
+    this.promptText
+      .setPosition(Math.max(half + 2, Math.min(WIDTH - half - 2, at.x)), at.y - 18)
+      .setVisible(true)
   }
 
   get feet () {

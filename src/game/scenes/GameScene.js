@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { WIDTH, HEIGHT, TILE, MAP_TOP, COLORS, TUNING, FONT } from '@/game/constants'
 import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL } from '@/game/data/map'
 import { WAVES, WIN_WAVE, CRITIC } from '@/game/data/waves'
+import { GUESTS, rollGuest } from '@/game/data/guests'
 import { POWERUPS } from '@/game/data/powerups'
 import {
   tileCenter, Counter, Hook, Board, Grill, Crate, PlateStack, Sink, Bin, Table
@@ -13,7 +14,9 @@ import PlayerInput, { PAD } from '@/game/input/PlayerInput'
 import Hud from '@/game/ui/Hud'
 import TicketRail from '@/game/ui/TicketRail'
 import PauseOverlay from '@/game/ui/PauseOverlay'
+import { showReportCard } from '@/game/ui/ReportCard'
 import BotInput from '@/game/ai/BotInput'
+import Settings from '@/game/state/settings'
 import CookBot from '@/game/ai/CookBot'
 import ServerBot from '@/game/ai/ServerBot'
 import { floatText, shake, banner } from '@/game/ui/fx'
@@ -189,6 +192,7 @@ export default class GameScene extends Phaser.Scene {
     this.waveCfg = cfg
     this.spawned = 0
     this.waveServed = 0
+    this.waveStats = { served: 0, perfect: 0, angry: 0 }
     this.criticsLeft = cfg.critics || 0
     this.spawnTimer = 2.5
     this.waveActive = true
@@ -216,7 +220,7 @@ export default class GameScene extends Phaser.Scene {
     for (let i = 0; i < group && this.spawned < cfg.customers && this.queue.length < this.queueSpots.length; i++) {
       this.spawnCustomer(cfg, i)
     }
-    this.spawnTimer = cfg.spawnEvery / this.difficulty
+    this.spawnTimer = cfg.spawnEvery * RunState.diff.spawn / this.difficulty
   }
 
   spawnCustomer (cfg, offset) {
@@ -224,14 +228,20 @@ export default class GameScene extends Phaser.Scene {
     const critic = this.criticsLeft > 0 && Math.random() < this.criticsLeft / remaining
     if (critic) this.criticsLeft--
     const variants = this.registry.get('customerVariants')
+    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave)
+    const menu = guest.orders ? cfg.recipes.filter(r => guest.orders.includes(r)) : cfg.recipes
     const c = new Customer(this, {
       x: this.entrance.x + TILE + offset * 18,
       y: this.entrance.y,
-      texture: critic ? 'critic' : `customer${Phaser.Math.Between(0, variants - 1)}`,
-      order: Phaser.Utils.Array.GetRandom(cfg.recipes),
-      patience: (critic ? CRITIC.patience : cfg.patience) / this.difficulty,
-      critic
+      texture: `customer${Phaser.Math.Between(0, variants - 1)}`,
+      order: Phaser.Utils.Array.GetRandom(menu.length ? menu : cfg.recipes),
+      patience: (critic ? CRITIC.patience : cfg.patience * guest.patience) / this.difficulty,
+      guest
     })
+    if (guest.golden) {
+      floatText(this, this.entrance.x - TILE, this.entrance.y - 40, 'BIG TIPPER!', '#ffd93d')
+      sfx('lucky')
+    }
     this.spawned++
     this.customers.push(c)
     this.queue.push(c)
@@ -266,12 +276,28 @@ export default class GameScene extends Phaser.Scene {
     }
     bus.emit('wave_cleared', { wave: n })
     sfx('wave')
-    if (n === WIN_WAVE) {
-      banner(this, 'DINER SAVED!', 'NOW SURVIVE CLOSING TIME', '#ffd93d', 2600)
-    } else {
-      banner(this, `WAVE ${n} CLEAR`, `TIPS $${RunState.tips}`, '#7ed957')
-    }
-    this.time.delayedCall(n === WIN_WAVE ? 3200 : 2600, () => this.betweenWaves())
+    const { stars, bonus } = this.rateWave(n)
+    RunState.tips += bonus
+    RunState.stars += stars
+    showReportCard(this, {
+      title: n === WIN_WAVE ? 'DINER SAVED!' : `WAVE ${n} CLEAR`,
+      subtitle: n === WIN_WAVE ? 'NOW SURVIVE CLOSING TIME' : this.waveCfg.name,
+      stats: this.waveStats,
+      streak: RunState.streak,
+      stars,
+      bonus
+    })
+    this.time.delayedCall(4200, () => this.betweenWaves())
+  }
+
+  // 3 stars: no walkouts and at least half the serves PERFECT. 2: no walkouts.
+  // 1: cleared anyway. Bonus tips grow with the wave.
+  rateWave (n) {
+    const s = this.waveStats
+    let stars = 1
+    if (s.angry === 0) stars = s.served > 0 && s.perfect * 2 >= s.served ? 3 : 2
+    const bonus = [0, 3, 8, 15][stars] + n * stars
+    return { stars, bonus }
   }
 
   // Shop opens after every wave from wave 2 on, then any draft, then the wave.
@@ -354,19 +380,38 @@ export default class GameScene extends Phaser.Scene {
     c.table.itemView.setItem(served)
     bus.emit('order_closed', { order: c.ticket, served: true })
     c.ticket = null
+    const ratio = c.ratio
     c.setState('eating')
-    c.eatTimer = TUNING.eatTime
+    c.eatTimer = TUNING.eatTime * c.guest.eat
 
-    const speed = TUNING.speedTip * c.ratio
+    // Serve quality: PERFECT rewards speed, CLUTCH celebrates a last-second save.
+    const quality = ratio >= TUNING.perfectAt ? 'PERFECT' : ratio < TUNING.clutchBelow ? 'CLUTCH' : null
+    RunState.streak++
+    RunState.bestStreak = Math.max(RunState.bestStreak, RunState.streak)
+    const speed = TUNING.speedTip * ratio
     const octo = both ? TUNING.octoBonus : 0
-    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * (c.critic ? CRITIC.tipMult : 1)) + octo
+    const bonus = quality === 'PERFECT' ? TUNING.perfectBonus : quality === 'CLUTCH' ? TUNING.clutchBonus : 0
+    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * c.guest.tip * RunState.streakMult()) + octo + bonus
     RunState.tips += tip
     RunState.served++
+    if (quality === 'PERFECT') RunState.perfect++
+    if (quality === 'CLUTCH') RunState.clutch++
     this.waveServed++
+    this.waveStats.served++
+    if (quality === 'PERFECT') this.waveStats.perfect++
     bus.emit('tip_earned', { amount: tip, x: c.pos.x, y: c.pos.y })
+
     floatText(this, c.pos.x, c.pos.y - 40, octo ? `+$${tip} OCTO!` : `+$${tip}`)
+    if (quality) {
+      this.time.delayedCall(220, () => floatText(this, c.pos.x, c.pos.y - 52, `${quality}!`, quality === 'PERFECT' ? '#00ffd0' : '#ff3b8d'))
+    }
+    if ([3, 5, 10, 15, 20].includes(RunState.streak)) {
+      this.time.delayedCall(440, () => floatText(this, c.pos.x, c.pos.y - 64, `${RunState.streak} STREAK!`, '#f79a3e'))
+    }
     this.hud.bumpTips()
+    this.hud.bumpStreak()
     sfx('tip')
+    sfx('streak', RunState.streak)
     return true
   }
 
@@ -400,6 +445,9 @@ export default class GameScene extends Phaser.Scene {
       c.setAngry()
       RunState.lives--
       RunState.angry++
+      if (this.waveStats) this.waveStats.angry++
+      if (RunState.streak >= 3) floatText(this, c.pos.x, c.pos.y - 52, 'STREAK RESET', '#8a8399')
+      RunState.streak = 0
       bus.emit('customer_left_angry', { customer: c })
       bus.emit('life_lost', { lives: RunState.lives })
       sfx('angry')
@@ -551,6 +599,8 @@ export default class GameScene extends Phaser.Scene {
     p.update(dt)
     const target = this.pickTarget(p)
     p.setTarget(target)
+    const human = !(p.input instanceof BotInput)
+    p.showPrompt(human && Settings.prompts && target ? target.prompt(p) : null, target)
     if (p.input.pressed('interact')) {
       let ok = false
       if (target instanceof Customer) ok = this.follow(target)

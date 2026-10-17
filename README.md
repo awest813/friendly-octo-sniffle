@@ -19,6 +19,11 @@ other role.
 2. Choose **PLAY**. The first pad to press **A** is the Cook, the second is the Server.
 3. Playing solo? Join one role, then press **A** again. An AI teammate plays the other role. Press
    **Y** in the lobby to change how sharp it plays (Chill / Normal / Sharp).
+4. Press **X** in the lobby to pick a difficulty: **Relaxed** (more patience, same content),
+   **Normal** or **Frantic** (tighter, +25% tips).
+
+While you play, a small prompt over whatever you're facing tells you what your button does there
+("A: GRAB BUN", "X: HOLD TO CHOP", "A: SEAT GUEST"). You can turn it off in Settings.
 
 New to the game? **HOW TO PLAY** on the title screen walks through everything in five short pages.
 
@@ -51,10 +56,18 @@ disconnect, press A on any free pad, or that role's keyboard key.
   the grill. While anything burns, every customer loses patience faster.
 - After each wave from wave 2, the **shop** sells lives, plates and calm music. Tips are both your
   money and your score.
+- **Guests** vary: CHILL grandparents wait longer, KIDS eat fast, RUSH guests are impatient but tip
+  big, VIP critics tip triple, and a glittering BIG TIPPER turns up now and then.
+- **Rewards:** every serve in a row grows your streak (up to +50% tips). Serve fast for PERFECT,
+  save a guest at the last second for CLUTCH. Each wave is rated out of 3 stars, with bonus tips.
+  Power-up drafts come before waves 3, 5 and 7.
 - Three angry walkouts and the run is over. Your best runs are saved on this device.
 
-**Settings** (title screen or pause menu): sound and music volume, screen shake, gamepad rumble,
-AI teammate skill, fullscreen. They're saved in the browser.
+No ads, no purchases, no daily-login hooks: the game rewards playing well together, not time spent.
+See the design doc's "Ethical fun" section for the reasoning.
+
+**Settings** (title screen or pause menu): difficulty, button prompts, sound and music volume,
+screen shake, gamepad rumble, AI teammate skill, fullscreen. They're saved in the browser.
 
 ## Development
 

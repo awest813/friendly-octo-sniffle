@@ -22,7 +22,7 @@ export default class ScoresScene extends Phaser.Scene {
       const color = i === 0 ? CSS.diner : CSS.white
       this.add.rectangle(WIDTH / 2, y + 4, 380, 26, COLORS.panel).setStrokeStyle(2, i === 0 ? COLORS.diner : COLORS.panelEdge)
       this.add.text(WIDTH / 2 - 176, y, `${i + 1}`, { fontFamily: FONT, fontSize: '8px', color })
-      this.add.text(WIDTH / 2 - 150, y, s.mode, { fontFamily: FONT, fontSize: '8px', color: CSS.cook })
+      this.add.text(WIDTH / 2 - 150, y, s.diff && s.diff !== 'NORMAL' ? `${s.mode} ${s.diff}` : s.mode, { fontFamily: FONT, fontSize: '8px', color: CSS.cook })
       this.add.text(WIDTH / 2 + 10, y, s.waves >= 8 ? 'SAVED THE DINER' : `WAVE ${s.waves}`, { fontFamily: FONT, fontSize: '8px', color }).setOrigin(0.5, 0)
       this.add.text(WIDTH / 2 + 176, y, `$${s.tips}`, { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(1, 0)
     })

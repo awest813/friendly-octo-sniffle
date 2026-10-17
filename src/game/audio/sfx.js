@@ -68,6 +68,10 @@ const SOUNDS = {
   throw: () => noise(0, 0.22, 0.4, 1800),
   buy: () => { tone(1047, 0, 0.06, 'square', 0.5); tone(1319, 0.06, 0.06, 'square', 0.5); tone(2093, 0.12, 0.1, 'square', 0.4) },
   pause: () => tone(440, 0, 0.08, 'triangle', 0.6),
+  // Rising pitch with the streak so a good run literally sounds better.
+  streak: n => { if (n >= 2) tone(440 * Math.pow(2, Math.min(n, 12) / 12), 0.12, 0.09, 'triangle', 0.45) },
+  star: i => { tone(784 * Math.pow(2, i * 4 / 12), 0, 0.18, 'square', 0.5); tone(1568 * Math.pow(2, i * 4 / 12), 0.05, 0.2, 'triangle', 0.3) },
+  lucky: () => [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, i * 0.05, 0.1, 'triangle', 0.35)),
   wave: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, 'square', 0.45))
 }
 
@@ -75,8 +79,8 @@ export function audioContext () {
   return ctx
 }
 
-export function sfx (name) {
+export function sfx (name, arg) {
   if (!ctx || !SOUNDS[name] || !Settings.sfx) return
   if (ctx.state === 'suspended') ctx.resume()
-  SOUNDS[name]()
+  SOUNDS[name](arg)
 }

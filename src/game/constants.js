@@ -4,7 +4,7 @@ export const TILE = 32
 export const MAP_TOP = 40
 
 export const FONT = '"Press Start 2P", monospace'
-export const VERSION = '0.4.0'
+export const VERSION = '0.5.0'
 
 export const COLORS = {
   bg: 0x120f1a,
@@ -50,7 +50,11 @@ export const TUNING = {
   fireDrain: 1.5,
   octoBonus: 2,
   throwRange: 300,
-  maxPlates: 7
+  maxPlates: 7,
+  perfectAt: 0.7,
+  clutchBelow: 0.15,
+  perfectBonus: 2,
+  clutchBonus: 3
 }
 
 // Between-wave shop. Prices go up 20% with Bigger Tips.

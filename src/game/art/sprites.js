@@ -64,6 +64,14 @@ export function customerPalettes () {
   return out
 }
 
+export const GRANNY_PALETTE = {
+  k: OUTLINE, h: '#d8d8e0', s: '#f2c39b', S: '#d79b74', e: OUTLINE, t: '#9a6fc4', T: '#6f4a96', a: '#9a6fc4', p: '#4a3a5a'
+}
+
+export const RUSHER_PALETTE = {
+  k: OUTLINE, h: '#2a1a14', s: '#c68a5e', S: '#9f6a44', e: OUTLINE, t: '#2b3a5a', T: '#1c2640', a: '#e8402f', p: '#1c2640'
+}
+
 export const CRITIC_PALETTE = {
   k: OUTLINE, h: '#1b1b1b', s: '#f2c39b', S: '#d79b74', e: OUTLINE, t: '#ffd93d', T: '#c9a422', a: '#1f1a2b', p: '#1f1a2b'
 }
@@ -283,6 +291,66 @@ export const ICONS = {
     '.kRRRRk.',
     '..kkkk..'
   ], { k: OUTLINE, r: '#e8402f', R: '#a8261c', w: '#ff9b8a', g: '#aab3c5' }],
+  pu_coffee: [[
+    '........',
+    'kkkkkk..',
+    'kwwwwk..',
+    'kbbbbkkk',
+    'kbbbbk.k',
+    'kbbbbkkk',
+    'kbbbbk..',
+    '.kkkk...'
+  ], { k: OUTLINE, w: '#f4f4f4', b: '#8a4a2a' }],
+  pu_sink: [[
+    '...k....',
+    '..kbk...',
+    '.kbbbk..',
+    '.kbwbk..',
+    'kbbwbbk.',
+    'kbbbbbk.',
+    '.kbbbk..',
+    '..kkk...'
+  ], { k: OUTLINE, b: '#3b8fd0', w: '#c8f0ff' }],
+  pu_chair: [[
+    '.kk.....',
+    '.kbk....',
+    '.kbk....',
+    '.kbkkkk.',
+    '.kbbbbbk',
+    '.kkkkkkk',
+    '.kb..kb.',
+    '.kk..kk.'
+  ], { k: OUTLINE, b: '#b07a48' }],
+  pu_clover: [[
+    '.kk.kk..',
+    'kggkggk.',
+    'kgGkGgk.',
+    '.kkGkk..',
+    'kgGkGgk.',
+    'kggkggk.',
+    '.kk.kk..',
+    '...k....'
+  ], { k: OUTLINE, g: '#7ed957', G: '#3c9a40' }],
+  star: [[
+    '...kk...',
+    '...yk...',
+    'kkkyykkk',
+    'kyyyyyyk',
+    '.kyyyyk.',
+    '.kykkyk.',
+    'kyk..kyk',
+    'kk....kk'
+  ], { k: OUTLINE, y: '#ffd93d' }],
+  star_empty: [[
+    '...kk...',
+    '...dk...',
+    'kkkddkkk',
+    'kddddddk',
+    '.kddddk.',
+    '.kdkkdk.',
+    'kdk..kdk',
+    'kk....kk'
+  ], { k: '#3a3150', d: '#241d33' }],
   heart: 'pu_charm',
   heart_empty: [[
     '.kk.kk..',

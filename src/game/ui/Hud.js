@@ -13,12 +13,19 @@ export default class Hud {
       this.hearts.push(scene.add.image(13 + i * 18, 27, 'heart').setDepth(9100))
     }
     this.tips = scene.add.text(134, 22, '', { fontFamily: FONT, fontSize: '8px', color: '#ffd93d' }).setOrigin(1, 0).setDepth(9100)
+    this.streak = scene.add.text(134, 5, '', { fontFamily: FONT, fontSize: '8px', color: '#f79a3e' }).setOrigin(1, 0).setDepth(9100)
     this.mods = []
+  }
+
+  bumpStreak () {
+    this.scene.tweens.add({ targets: this.streak, scale: { from: 1.6, to: 1 }, duration: 240, ease: 'Back.easeOut' })
   }
 
   update () {
     const w = RunState.wave
-    this.wave.setText(w > WIN_WAVE ? 'CLOSING TIME' : `WAVE ${w}/${WIN_WAVE}`)
+    this.wave.setText(w > WIN_WAVE ? 'CLOSING' : `WAVE ${w}/${WIN_WAVE}`)
+    // Streak multiplier: visible whenever it's doing something for you.
+    this.streak.setText(RunState.streak >= 2 ? `x${RunState.streakMult().toFixed(2)}` : '')
     this.hearts.forEach((h, i) => h.setTexture(i < RunState.lives ? 'heart' : 'heart_empty'))
     this.tips.setText(`$${RunState.tips}`)
   }

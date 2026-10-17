@@ -1,5 +1,5 @@
 import {
-  CHEF, PERSON, CHEF_PALETTE, SERVER_PALETTE, CRITIC_PALETTE, customerPalettes, ICONS, ICON_PALETTE_OVERRIDES
+  CHEF, PERSON, CHEF_PALETTE, SERVER_PALETTE, CRITIC_PALETTE, GRANNY_PALETTE, RUSHER_PALETTE, customerPalettes, ICONS, ICON_PALETTE_OVERRIDES
 } from '@/game/art/sprites'
 
 const SCALE = 2
@@ -167,6 +167,8 @@ function buildCharacters (scene) {
   pixelTexture(scene, 'cook', CHEF, CHEF_PALETTE)
   pixelTexture(scene, 'server', PERSON, SERVER_PALETTE)
   pixelTexture(scene, 'critic', PERSON, CRITIC_PALETTE)
+  pixelTexture(scene, 'guest_granny', PERSON, GRANNY_PALETTE)
+  pixelTexture(scene, 'guest_rusher', PERSON, RUSHER_PALETTE)
   const palettes = customerPalettes()
   palettes.forEach((p, i) => pixelTexture(scene, `customer${i}`, PERSON, p))
   scene.registry.set('customerVariants', palettes.length)

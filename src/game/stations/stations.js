@@ -1,10 +1,19 @@
 import { TILE, MAP_TOP, TUNING, FONT } from '@/game/constants'
-import { INGREDIENTS } from '@/game/data/recipes'
+import { INGREDIENTS, canAddToPlate } from '@/game/data/recipes'
 import {
-  ItemView, ingredient, plate, tool, combine, addToPlate, isCleanPlate, isDirtyPlate, isTool, isServable
+  ItemView, ingredient, plate, tool, combine, addToPlate, isCleanPlate, isDirtyPlate, isTool, isServable,
+  isPlateReady, plateDish
 } from '@/game/entities/items'
 import RunState from '@/game/state/RunState'
 import { sfx } from '@/game/audio/sfx'
+
+// Would combine() succeed? Same rules, no mutation (for button prompts).
+function canCombine (held, here) {
+  return (isCleanPlate(held) && isPlateReady(here) && canAddToPlate(held.contents, here.id)) ||
+    (isCleanPlate(here) && isPlateReady(held) && canAddToPlate(here.contents, held.id))
+}
+
+const NAMES = { bun: 'BUN', patty: 'PATTY', lettuce: 'LETTUCE', tomato: 'TOMATO' }
 
 export function tileCenter (tx, ty) {
   return { x: tx * TILE + TILE / 2, y: MAP_TOP + ty * TILE + TILE / 2 }
@@ -95,6 +104,20 @@ export class Station {
     return false
   }
 
+  // What pressing a button here would do right now. {A}/{X} become the
+  // player's own button names. null = nothing useful to do.
+  prompt (player) {
+    const held = player.item
+    const here = this.item
+    if (!held && here) return '{A} PICK UP'
+    if (held && !here) return this.accepts(held) ? '{A} PUT DOWN' : null
+    if (held && here) {
+      if (canCombine(held, here)) return '{A} ADD TO PLATE'
+      if (player.canStack(here)) return '{A} STACK PLATE'
+    }
+    return null
+  }
+
   // An item arriving without a player (Ingredient Cannon). Same rules as
   // putting it down by hand.
   receive (item) {
@@ -144,6 +167,12 @@ export class Hook extends Station {
     super(scene, tx, ty, 'hook')
     this.setItem(tool('extinguisher'))
   }
+
+  prompt (player) {
+    if (!player.item && isTool(this.item, 'extinguisher')) return '{A} TAKE EXTINGUISHER'
+    if (isTool(player.item, 'extinguisher') && !this.item) return '{A} HANG IT BACK'
+    return super.prompt(player)
+  }
 }
 
 export class Board extends Station {
@@ -175,6 +204,11 @@ export class Board extends Station {
     this.refreshItem()
     this.progress = 0
     sfx('chopDone')
+  }
+
+  prompt (player) {
+    if (!player.item && this.choppable) return '{X} HOLD TO CHOP'
+    return super.prompt(player)
   }
 
   use (player, dt) {
@@ -246,6 +280,15 @@ export class Grill extends Station {
   onTaken () {
     this.timer = 0
     this.fireTimer = 0
+  }
+
+  prompt (player) {
+    const held = player.item
+    if (this.onFire) return isTool(held, 'extinguisher') ? '{X} HOLD TO SPRAY' : 'FIRE! GET THE EXTINGUISHER'
+    if (held && !this.item && this.accepts(held)) return '{A} GRILL IT'
+    if (!held && this.item && this.item.state === 'raw') return 'COOKING...'
+    if (!held && this.item && this.item.state === 'burnt') return '{A} TAKE BURNT PATTY'
+    return super.prompt(player)
   }
 
   use (player, dt) {
@@ -374,6 +417,15 @@ export class Crate extends Station {
   receive () {
     return false
   }
+
+  prompt (player) {
+    const held = player.item
+    const name = NAMES[this.id]
+    if (!held) return `{A} GRAB ${name}`
+    if (isCleanPlate(held) && INGREDIENTS[this.id].plateReady === 'raw' && canAddToPlate(held.contents, this.id)) return `{A} ADD ${name}`
+    if (held.type === 'ing' && held.id === this.id && held.state === 'raw') return '{A} PUT BACK'
+    return null
+  }
 }
 
 export class PlateStack extends Station {
@@ -419,6 +471,14 @@ export class PlateStack extends Station {
   receive () {
     return false
   }
+
+  prompt (player) {
+    const held = player.item
+    if (this.count > 0 && (!held || player.canStack(plate()))) return '{A} TAKE PLATE'
+    if (isCleanPlate(held) && held.contents.length === 0) return '{A} RETURN PLATE'
+    if (!held && this.count === 0) return 'NO PLATES - WASH SOME'
+    return null
+  }
 }
 
 export class Sink extends Station {
@@ -455,7 +515,7 @@ export class Sink extends Station {
       this.drawBar(null)
       return
     }
-    this.timer += dt
+    this.timer += dt * (RunState.has('sink') ? 2 : 1)
     if (this.timer >= TUNING.washTime) {
       this.timer = 0
       this.queue--
@@ -468,6 +528,10 @@ export class Sink extends Station {
 
   receive () {
     return false
+  }
+
+  prompt (player) {
+    return isDirtyPlate(player.item) ? '{A} WASH PLATE' : null
   }
 }
 
@@ -494,6 +558,13 @@ export class Bin extends Station {
 
   receive (item) {
     return item.type === 'ing'
+  }
+
+  prompt (player) {
+    const held = player.item
+    if (held && held.type === 'ing') return '{A} TRASH IT'
+    if (isCleanPlate(held) && held.contents.length) return '{A} EMPTY PLATE'
+    return null
   }
 }
 
@@ -565,5 +636,19 @@ export class Table extends Station {
 
   receive () {
     return false
+  }
+
+  prompt (player) {
+    const held = player.item
+    const c = this.customer
+    if (this.dirty && (!held || player.canStack(plate(true)))) return '{A} CLEAR TABLE'
+    if (this.scene.leading && this.free) return '{A} SEAT GUEST'
+    if (c && c.state === 'ready') return '{A} TAKE ORDER'
+    if (c && c.state === 'waiting') {
+      if ([held, player.extra].some(it => isServable(it) && plateDish(it) === c.order)) return '{A} SERVE'
+      if (isServable(held)) return 'WRONG DISH'
+      return 'WAITING FOR FOOD'
+    }
+    return null
   }
 }

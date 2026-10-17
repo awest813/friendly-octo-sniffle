@@ -111,17 +111,17 @@ the endless wave 9.
 | # | Name | Customers | Tables | Patience | Spawn every | Recipes | Twist |
 |---|---|---|---|---|---|---|---|
 | 1 | Opening Shift (tutorial) | 3 | 2 | 45 s | 14 s | burger | — |
-| 2 | Lunch Rush | 5 | 3 | 36 s | 12 s | +salad | — |
-| 3 | First Draft | 6 | 3 | 34 s | 11 s | burger, salad | **Draft #1 before the wave** |
-| 4 | Double Booked | 6 | 4 | 32 s | 18 s (pairs) | +deluxe | customers arrive in pairs |
-| 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 11 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) |
-| 6 | Second Draft | 8 | 5 | 30 s | 10 s | all | **Draft #2 before the wave** |
-| 7 | VIP Food Critic | 9 | 5 | 28 s | 10 s | all | 2 critics: 15 s patience, ×3 tips |
+| 2 | Lunch Rush | 5 | 3 | 36 s | 12 s | +salad | grandparents and big tippers appear |
+| 3 | First Draft | 6 | 3 | 34 s | 11 s | burger, salad | **Draft before the wave**; kids appear |
+| 4 | Double Booked | 6 | 4 | 32 s | 18 s (pairs) | +deluxe | customers arrive in pairs; rushers appear |
+| 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 11 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) ; **draft before the wave** |
+| 6 | Dinner Rush | 8 | 5 | 30 s | 10 s | all | — |
+| 7 | VIP Food Critic | 9 | 5 | 28 s | 10 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
 | 8 | Full House | 10 | 6 | 26 s | 16 s (pairs) | all | every table open |
 | 9 | Closing Time | ∞ | 6 | 26 s | 9 s | all | endless; every 4 customers served → spawns and patience 15% harsher. Keep your tips. |
 
 - **Clearing wave 8 = the diner is saved (run counts as a win).** Wave 9 is a score chase until lives run out.
-- The draft is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
+- The draft (before waves 3, 5 and 7) is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
 - Every wave starts with a one-line hint on the bottom wall introducing what's new.
 - **Fire (waves 5+):** a burnt patty left on the grill for 3 s bursts into flames. The burning grill is unusable and nothing can be taken off it. While anything burns, **every customer loses patience 1.5× faster**. Fix: take the extinguisher from its red hook and hold X on the grill for 1.2 s.
 - **Shop (after every wave from wave 2):** tips are your score *and* your currency.
@@ -150,6 +150,50 @@ Power-ups are **modifiers, not new systems**: they read from `RunState.modifiers
 | Robot Busboy 🤖 | Diner | Epic | Auto-clears one dirty table every 12 s | ✅ |
 | Octo-Tray 🐙 | Server | Rare | Carry 2 plates. Serving while holding both = +$2 | ✅ |
 | Ingredient Cannon 💥 | Cook | Epic | Y throws the held ingredient in the facing direction. It lands on the first station that can take it (counter, board, grill, a plate, the bin) or in the Server's empty hands; if nothing can, the Cook keeps it | ✅ |
+| Coffee Break ☕ | Cook | Common | +30% Cook move speed | ✅ |
+| Power Sink 💧 | Diner | Common | Plates wash twice as fast | ✅ |
+| Comfy Chairs 🪑 | Diner | Rare | Seated guests lose patience 30% slower | ✅ |
+| Lucky Streak 🍀 | Server | Rare | Streak bonus builds twice as fast, capped at x2 instead of x1.5 | ✅ |
+
+## 6b. Guests
+
+Every trait is printed over the guest's head, so nothing is hidden.
+
+| Guest | Tag | Patience | Tips | Eats | Walks | From |
+|---|---|---|---|---|---|---|
+| Regular | — | 1× | 1× | 1× | 1× | wave 1 |
+| Grandparent | CHILL (green) | 1.5× | 1.2× | 1.6× slower | 0.6× | wave 2 |
+| Kid | KID (blue), smaller | 0.85× | 0.7× | 0.6× | 1.25× | wave 3; only orders burgers |
+| Rusher | RUSH (orange), suit | 0.7× | 1.6× | 0.5× | 1.3× | wave 4 |
+| Critic | VIP (gold), gold ticket | 15 s fixed | 3× | 1× | 1× | wave 7 (2 per wave) |
+| Big Tipper | $$$, glittering gold | 1.1× | 3× | 1× | 1× | 8% of guests from wave 2 |
+
+## 6c. Rewards
+
+- **Streak:** every serve without a walkout adds 5% to tips, up to +50% (Lucky Streak: 10%, up to +100%). Shown as `x1.25` in the HUD; the tip sound climbs in pitch as it grows; milestone pops at 3, 5, 10, 15 and 20. A walkout resets it with a quiet grey "STREAK RESET", not a punishment screen.
+- **Serve quality:** PERFECT (served with ≥70% patience left) = +$2; CLUTCH (saved with <15% left) = +$3. Clutch saves are celebrated on purpose: rescuing a guest at the last second is the best feeling in the genre.
+- **Wave report card:** 3 stars = no walkouts and at least half the serves PERFECT; 2 = no walkouts; 1 = cleared. Star bonus tips = [0, 3, 8, 15][stars] + wave × stars. Stars land one by one with rising notes; 3 stars throws confetti.
+- **Drafts** before waves 3, 5 and 7 (was 3 and 6): a new toy every couple of waves.
+- **Personal bests:** high score table, best streak, stars earned, perfect serves. "NEW BEST STREAK!" only compares against your own past runs.
+
+## 6d. Ethical fun: how the game uses reward loops
+
+The game deliberately uses the feel-good parts of reward psychology (clear goals, immediate feedback, escalating juice, celebration of mastery) and deliberately avoids the manipulative parts.
+
+**We do**
+- Reward **skill and teamwork**: streaks, PERFECT and CLUTCH, and stars all come from playing well together, never from time spent or money.
+- Give **immediate, honest feedback**: every reward says what earned it (`+$12`, `PERFECT!`, `3 STREAK!`), and every guest trait is labelled.
+- Celebrate **comebacks** (CLUTCH, shop lives) so a bad moment never feels like the end.
+- Let players choose their **challenge**: RELAXED is a first-class mode with the same content, not a penalty. FRANTIC pays a bit more for the extra pressure. Button prompts can be switched off once you've learned the game.
+- Keep surprises **small and free**: the Big Tipper is a pleasant random moment. It can't be bought, saved up for or chased outside play.
+- Respect **time and attention**: runs are about 18 minutes and end cleanly; the game pauses itself when you look away; nothing happens while you're gone.
+
+**We don't**
+- No daily login rewards, streak-keeping calendars, timers that run while you're away, or "come back or lose it" mechanics.
+- No real-money purchases, loot boxes or paid randomness. Tips are earned and spent only inside a run.
+- No shaming on failure: walkouts get a short grey note, and the run-over screen leads with what you achieved.
+- No fake scarcity or FOMO events; all content is available every run.
+- No comparing players against strangers: high scores are local and personal.
 
 ## 7. Architecture (Phaser)
 
@@ -222,6 +266,14 @@ Godot → Phaser mapping used:
 - [x] Launcher: loading screen, load-failure and crash screens, fullscreen button (F), touch-device notice, favicon and page metadata
 - [x] Auto-pause on window blur; inputs ignore buttons still held from the previous screen
 - [x] GitHub Pages workflow (build on PR, deploy master); relative asset paths
+
+**Slice 5 — fun and feedback**
+- [x] Context button prompts over whatever you face ("A: GRAB BUN", "X: HOLD TO CHOP"), using the player's real buttons; toggle in Settings
+- [x] Guest variety (grandparents, kids, rushers, big tippers) with visible tags
+- [x] Streaks, PERFECT/CLUTCH serves, wave report card with stars and bonus tips, personal bests
+- [x] Four new power-ups; drafts before waves 3, 5 and 7
+- [x] Difficulty: Relaxed / Normal / Frantic (lobby X, or Settings), recorded with high scores
+- [x] How to Play page for guests and tips
 
 **Next**
 - [ ] Real playtest on two pads; tune against human numbers (bots are a floor, not a ceiling)

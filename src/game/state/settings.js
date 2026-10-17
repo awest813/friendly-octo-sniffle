@@ -5,12 +5,22 @@ const KEY = 'duo-diner:settings'
 
 export const AI_SKILLS = ['CHILL', 'NORMAL', 'SHARP']
 
+// RELAXED is a first-class way to play, not a penalty box: same content,
+// more breathing room. FRANTIC pays a little extra for the extra pressure.
+export const DIFFICULTIES = {
+  RELAXED: { patience: 1.4, spawn: 1.25, tips: 1 },
+  NORMAL: { patience: 1, spawn: 1, tips: 1 },
+  FRANTIC: { patience: 0.85, spawn: 0.9, tips: 1.25 }
+}
+
 const DEFAULTS = {
   sfx: 7, // 0-10
   music: 5, // 0-10
   shake: true,
   rumble: true,
-  aiSkill: 'NORMAL'
+  aiSkill: 'NORMAL',
+  difficulty: 'NORMAL',
+  prompts: true
 }
 
 function load () {

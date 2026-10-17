@@ -7,7 +7,11 @@ export const POWERUPS = [
   { id: 'ghost', cat: 'COOK', name: 'GHOST PAN', desc: 'Grills never burn food.', rarity: 'RARE', icon: 'pu_ghost' },
   { id: 'busboy', cat: 'DINER', name: 'ROBOT BUSBOY', desc: 'Clears a dirty table every 12s.', rarity: 'EPIC', icon: 'pu_busboy' },
   { id: 'octo', cat: 'SERVER', name: 'OCTO-TRAY', desc: 'Carry 2 plates. +$2 serving with both full.', rarity: 'RARE', icon: 'pu_octo' },
-  { id: 'cannon', cat: 'COOK', name: 'INGREDIENT CANNON', desc: 'Y yeets ingredients onto counters or the Server.', rarity: 'EPIC', icon: 'pu_cannon' }
+  { id: 'cannon', cat: 'COOK', name: 'INGREDIENT CANNON', desc: 'Y yeets ingredients onto counters or the Server.', rarity: 'EPIC', icon: 'pu_cannon' },
+  { id: 'coffee', cat: 'COOK', name: 'COFFEE BREAK', desc: '+30% Cook move speed.', rarity: 'COMMON', icon: 'pu_coffee' },
+  { id: 'sink', cat: 'DINER', name: 'POWER SINK', desc: 'Plates wash twice as fast.', rarity: 'COMMON', icon: 'pu_sink' },
+  { id: 'comfy', cat: 'DINER', name: 'COMFY CHAIRS', desc: 'Seated guests lose patience 30% slower.', rarity: 'RARE', icon: 'pu_chair' },
+  { id: 'clover', cat: 'SERVER', name: 'LUCKY STREAK', desc: 'Streaks build twice as fast, up to x2.', rarity: 'RARE', icon: 'pu_clover' }
 ]
 
 export function draftOptions (owned, count = 3) {
