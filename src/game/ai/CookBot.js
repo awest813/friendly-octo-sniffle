@@ -138,7 +138,8 @@ export default class CookBot extends Bot {
     const raw = S.boards.find(b => b.choppable)
     if (raw) return this.hold(raw, () => !raw.choppable)
 
-    const stashed = S.counters.find(c => !c.assembly && isPlateReady(c.item) && plateSt && needs.includes(c.item.id))
+    // Any counter can hold a stashed part, the spare assembly counter included.
+    const stashed = plateSt && S.counters.find(c => c !== plateSt && isPlateReady(c.item) && needs.includes(c.item.id))
     if (stashed) return this.tap(stashed)
 
     // Grilling is the slowest step: keep a patty going for every open order that needs one.
