@@ -2,7 +2,10 @@ const webpack = require('webpack');
 const { defineConfig } = require('@vue/cli-service')
 
 module.exports = defineConfig({
+  // Relative asset paths so dist/ works from any folder, e.g. GitHub Pages.
+  publicPath: './',
   transpileDependencies: true,
+  productionSourceMap: false,
 
   configureWebpack: {
     plugins: [

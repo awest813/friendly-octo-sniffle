@@ -1,17 +1,27 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <meta name="description" content="Duo Diner: a two-player couch co-op diner roguelike. One cooks, one serves, both panic. Best with two gamepads.">
+    <meta name="theme-color" content="#120f1a">
+    <meta property="og:title" content="Duo Diner">
+    <meta property="og:description" content="One cooks. One serves. Both panic. A couch co-op diner roguelike for two gamepads.">
+    <meta property="og:image" content="<%= BASE_URL %>icon-192.png">
+    <link rel="icon" type="image/png" href="<%= BASE_URL %>favicon.png">
+    <link rel="apple-touch-icon" href="<%= BASE_URL %>icon-192.png">
     <title>Duo Diner</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #120f1a; }
+    </style>
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <p style="color:#f4f4f4;font-family:monospace;text-align:center;margin-top:40vh">
+        Duo Diner needs JavaScript to run.
+      </p>
     </noscript>
     <div id="app"></div>
-    <!-- built files will be auto injected -->
   </body>
 </html>

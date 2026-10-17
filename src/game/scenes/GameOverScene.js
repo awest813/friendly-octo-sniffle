@@ -5,6 +5,7 @@ import PlayerInput from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
 import { loadScores, addScore, allBots } from '@/game/state/scores'
 import { sfx } from '@/game/audio/sfx'
+import { playMusic } from '@/game/audio/music'
 
 export default class GameOverScene extends Phaser.Scene {
   constructor () {
@@ -17,6 +18,7 @@ export default class GameOverScene extends Phaser.Scene {
 
   create () {
     this.cameras.main.setBackgroundColor(COLORS.bg)
+    playMusic('menu')
     const title = this.won ? 'DINER SAVED' : 'RUN OVER'
     this.add.text(WIDTH / 2, 40, title, { fontFamily: FONT, fontSize: '24px', color: this.won ? CSS.diner : CSS.danger }).setOrigin(0.5)
     const sub = this.won ? 'SURVIVED THE NIGHT. CLOSING TIME SCORE BELOW.' : 'ONE COOKED. ONE SERVED. BOTH PANICKED.'
@@ -42,10 +44,10 @@ export default class GameOverScene extends Phaser.Scene {
     const rank = bots ? -1 : addScore(entry)
     this.drawScores(rank)
 
-    this.prompt = this.add.text(WIDTH / 2, 330, 'PRESS A TO GO AGAIN', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
+    this.prompt = this.add.text(WIDTH / 2, 330, 'A: PLAY AGAIN   -   B: MENU', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
     const bindings = this.registry.get('bindings') || {}
     this.inputs = [new PlayerInput(this, 'cook', bindings.cook), new PlayerInput(this, 'server', bindings.server)]
-    this.readyAt = this.time.now + 800
+    this.readyAt = this.game.getTime() + 800
 
     if (this.registry.get('autoplay')) {
       console.info('[duo] run over', JSON.stringify({ won: this.won, waves, served: RunState.served, angry: RunState.angry, tips: RunState.tips, mods: [...RunState.modifiers] }))
@@ -77,10 +79,13 @@ export default class GameOverScene extends Phaser.Scene {
   update () {
     this.prompt.setAlpha(0.6 + 0.4 * Math.sin(this.time.now / 150))
     this.inputs.forEach(i => i.update())
-    if (this.time.now < this.readyAt) return
+    if (this.game.getTime() < this.readyAt) return
     if (this.inputs.some(i => i.pressed('interact'))) {
       sfx('confirm')
       this.scene.start('LobbyScene')
+    } else if (this.inputs.some(i => i.pressed('back') || i.pressed('pause'))) {
+      sfx('confirm')
+      this.scene.start('TitleScene', { skipSplash: true })
     }
   }
 }

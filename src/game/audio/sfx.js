@@ -1,4 +1,6 @@
 // Tiny WebAudio synth so the slice needs no audio assets.
+import Settings, { onSettingsChange } from '@/game/state/settings'
+
 let ctx = null
 let master = null
 
@@ -7,8 +9,10 @@ export function initSfx (scene) {
   ctx = scene.sound && scene.sound.context
   if (!ctx) return
   master = ctx.createGain()
-  master.gain.value = 0.18
   master.connect(ctx.destination)
+  const apply = () => { master.gain.value = 0.26 * Settings.sfx / 10 }
+  apply()
+  onSettingsChange(apply)
 }
 
 function tone (freq, start, dur, type = 'square', vol = 1, slideTo = null) {
@@ -67,8 +71,12 @@ const SOUNDS = {
   wave: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, 'square', 0.45))
 }
 
+export function audioContext () {
+  return ctx
+}
+
 export function sfx (name) {
-  if (!ctx || !SOUNDS[name]) return
+  if (!ctx || !SOUNDS[name] || !Settings.sfx) return
   if (ctx.state === 'suspended') ctx.resume()
   SOUNDS[name]()
 }

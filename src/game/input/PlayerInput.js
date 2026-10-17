@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import Settings from '@/game/state/settings'
 
 const KC = Phaser.Input.Keyboard.KeyCodes
 
@@ -15,7 +16,7 @@ export const KEY_SCHEMES = {
 
 export const PAD = { A: 0, B: 1, X: 2, Y: 3, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 }
 
-const PAD_ACTIONS = {
+export const PAD_ACTIONS = {
   interact: PAD.A, use: PAD.X, throw: PAD.Y, back: PAD.B, pause: PAD.START, up: PAD.UP, down: PAD.DOWN, left: PAD.LEFT, right: PAD.RIGHT
 }
 
@@ -25,6 +26,16 @@ const FLICK_OFF = 0.3
 
 // The browser's own list is the source of truth: Phaser keeps a stale snapshot
 // of a pad after it is unplugged.
+// isDown alone misses a tap that goes down and up between two frames, and
+// Phaser's key-up clears JustDown too. A new key-down timestamp since the
+// last poll catches it.
+const lastDown = new WeakMap()
+export function keyDown (key) {
+  const fresh = key.timeDown > 0 && lastDown.get(key) !== key.timeDown
+  lastDown.set(key, key.timeDown)
+  return key.isDown || fresh
+}
+
 export function nativePadConnected (index) {
   if (index === null || index === undefined || !navigator.getGamepads) return false
   const pad = navigator.getGamepads()[index]
@@ -42,9 +53,10 @@ export default class PlayerInput {
     this.move = new Phaser.Math.Vector2()
     this.nav = { x: 0, y: 0 }
     this.latch = { x: false, y: false }
-    // Prime twice so a button still held from the previous scene isn't a fresh press.
-    this.update()
-    this.update()
+    // The first few polls in a scene only record state: a button still held
+    // from whatever opened this scene must not count as a fresh press. (A new
+    // scene's gamepad plugin takes a frame or two to report held buttons.)
+    this.settleFrames = 3
   }
 
   get pad () {
@@ -65,7 +77,7 @@ export default class PlayerInput {
     this.now = {}
     Object.entries(PAD_ACTIONS).forEach(([action, button]) => {
       const b = pad && pad.buttons[button]
-      this.now[action] = k[action].isDown || !!(b && b.pressed)
+      this.now[action] = keyDown(k[action]) || !!(b && b.pressed)
     })
 
     let sx = 0
@@ -85,6 +97,12 @@ export default class PlayerInput {
     this.nav.y = (this.pressed('down') ? 1 : 0) - (this.pressed('up') ? 1 : 0)
     this.flick('x', sx)
     this.flick('y', sy)
+    if (this.settleFrames > 0) {
+      this.settleFrames--
+      this.prev = { ...this.now }
+      this.nav.x = 0
+      this.nav.y = 0
+    }
   }
 
   flick (axis, value) {
@@ -107,6 +125,7 @@ export default class PlayerInput {
   // Gamepad rumble where the browser supports it. Callers pair it with a
   // screen shake so keyboard players get feedback too.
   rumble (duration = 200, strong = 0.7, weak = 0.4) {
+    if (!Settings.rumble) return
     const pad = this.pad
     const actuator = pad && ((pad.pad && pad.pad.vibrationActuator) || pad.vibration)
     if (!actuator || !actuator.playEffect) return

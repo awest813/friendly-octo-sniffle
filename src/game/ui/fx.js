@@ -1,4 +1,5 @@
 import { FONT } from '@/game/constants'
+import Settings from '@/game/state/settings'
 
 export function floatText (scene, x, y, text, color = '#ffd93d') {
   const t = scene.add.text(x, y, text, {
@@ -13,6 +14,7 @@ export function floatText (scene, x, y, text, color = '#ffd93d') {
 }
 
 export function shake (scene, strength = 0.006, duration = 160) {
+  if (!Settings.shake) return
   scene.cameras.main.shake(duration, strength)
 }
 

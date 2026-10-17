@@ -1,5 +1,7 @@
 import { Scene } from 'phaser'
 import { buildTextures } from '@/game/art/textures'
+import { initSfx, audioContext } from '@/game/audio/sfx'
+import { initMusic } from '@/game/audio/music'
 
 export default class BootScene extends Scene {
   constructor () {
@@ -8,6 +10,8 @@ export default class BootScene extends Scene {
 
   create () {
     buildTextures(this)
-    this.scene.start('LobbyScene')
+    initSfx(this)
+    initMusic(audioContext())
+    this.scene.start('TitleScene')
   }
 }

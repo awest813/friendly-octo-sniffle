@@ -20,6 +20,8 @@ import { floatText, shake, banner } from '@/game/ui/fx'
 import RunState from '@/game/state/RunState'
 import bus from '@/game/state/bus'
 import { initSfx, sfx } from '@/game/audio/sfx'
+import { playMusic, duckMusic } from '@/game/audio/music'
+import AnyInput from '@/game/input/AnyInput'
 
 const CRATES = { B: 'bun', P: 'patty', L: 'lettuce', M: 'tomato' }
 
@@ -33,6 +35,9 @@ export default class GameScene extends Phaser.Scene {
     // Scene systems survive a restart, so clear any pause left from the last run.
     this.time.paused = false
     this.tweens.resumeAll()
+    playMusic('game')
+    duckMusic(false)
+    this.demo = !!this.registry.get('demo')
     this.cameras.main.setBackgroundColor(COLORS.bg)
     this.physics.world.setBounds(0, MAP_TOP, WIDTH, HEIGHT - MAP_TOP)
     this.solids = this.physics.add.staticGroup()
@@ -79,6 +84,17 @@ export default class GameScene extends Phaser.Scene {
     if (this.input.gamepad) {
       this.input.gamepad.on('down', this.onPadDown, this)
       this.events.once('shutdown', () => this.input.gamepad.off('down', this.onPadDown, this))
+    }
+    // Alt-tabbing away mid-wave shouldn't cost lives.
+    this.game.events.on('blur', this.onBlur, this)
+    this.events.once('shutdown', () => this.game.events.off('blur', this.onBlur, this))
+
+    if (this.demo) {
+      this.demoInput = new AnyInput(this)
+      this.demoTime = 0
+      this.add.text(WIDTH / 2, HEIGHT / 2 + 60, 'DEMO  -  PRESS ANY BUTTON', {
+        fontFamily: FONT, fontSize: '8px', color: '#ffd93d', backgroundColor: '#120f1a', padding: { x: 6, y: 4 }
+      }).setOrigin(0.5).setDepth(9990)
     }
 
     this.time.delayedCall(500, () => this.nextWave())
@@ -264,8 +280,10 @@ export default class GameScene extends Phaser.Scene {
       this.nextWave()
       return
     }
+    duckMusic(true)
     this.scene.launch('ShopScene', {
       onDone: () => {
+        duckMusic(false)
         this.scene.resume()
         this.primeInputs()
         this.syncPlates()
@@ -497,7 +515,10 @@ export default class GameScene extends Phaser.Scene {
     bus.emit('run_over', { won })
     this.players.forEach(p => p.body.setVelocity(0, 0))
     banner(this, won ? 'LAST CALL!' : 'RUN OVER', won ? 'THE DINER CLOSES' : 'TOO MANY ANGRY CUSTOMERS', won ? '#ffd93d' : '#ff4040', 1800)
-    this.time.delayedCall(2200, () => this.scene.start('GameOverScene', { won }))
+    this.time.delayedCall(2200, () => {
+      if (this.demo) this.scene.start('TitleScene', { skipSplash: true })
+      else this.scene.start('GameOverScene', { won })
+    })
   }
 
   refreshModifiers () {
@@ -573,6 +594,7 @@ export default class GameScene extends Phaser.Scene {
 
   setPaused (on) {
     this.paused = on
+    duckMusic(on)
     if (on) {
       this.physics.pause()
       this.tweens.pauseAll()
@@ -586,16 +608,31 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  onBlur () {
+    if (!this.paused && !this.over && !this.demo && this.scene.isActive()) this.openPauseMenu()
+  }
+
+  openSettings () {
+    this.subMenu = true
+    this.scene.launch('SettingsScene', {
+      onClose: () => {
+        this.subMenu = false
+        this.primeInputs()
+      }
+    })
+  }
+
   openPauseMenu () {
     this.setPaused(true)
     sfx('pause')
     this.overlay.showMenu({
       resume: () => this.setPaused(false),
+      settings: () => this.openSettings(),
       restart: () => {
         RunState.reset()
         this.scene.restart()
       },
-      quit: () => this.scene.start('LobbyScene')
+      quit: () => this.scene.start('TitleScene', { skipSplash: true })
     })
   }
 
@@ -628,6 +665,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   updatePaused () {
+    if (this.subMenu) return
     if (this.lostRole) {
       const p = this.players.find(pl => pl.role === this.lostRole)
       if (p.input.pressed('interact')) this.rebind(this.lostRole, null)
@@ -641,8 +679,20 @@ export default class GameScene extends Phaser.Scene {
     this.overlay.menu.handle(inputs)
   }
 
+  // Attract mode: any button (or 2 minutes) goes back to the title screen.
+  updateDemo (dt) {
+    this.demoInput.update()
+    this.demoTime += dt
+    if (this.demoInput.anyPressed() || this.demoTime > 120) {
+      this.scene.start('TitleScene', { skipSplash: true })
+      return true
+    }
+    return false
+  }
+
   update (time, delta) {
     const dt = Math.min(delta / 1000, 0.05)
+    if (this.demo && this.updateDemo(dt)) return
     if (!this.paused && !this.over) this.bots.forEach(b => b.tick(dt))
     this.players.forEach(p => p.input.update())
     if (this.paused) {

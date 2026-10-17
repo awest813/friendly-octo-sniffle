@@ -3,7 +3,9 @@ import { FONT, CSS, COLORS } from '@/game/constants'
 import { sfx } from '@/game/audio/sfx'
 
 // Vertical list driven by PlayerInput.nav / interact. Items:
-//   { label, detail?, price?, enabled?: () => bool, action: () => void }
+//   { label, detail?, price?, enabled?: () => bool, action?: () => void,
+//     value?: () => string, adjust?: (dir) => void }
+// Rows with `adjust` change with left/right (A steps forward).
 export default class Menu {
   constructor (scene, { x, y, width, rowHeight = 30, items, depth = 9950, cursor = 0 }) {
     this.scene = scene
@@ -18,7 +20,7 @@ export default class Menu {
       const detail = scene.add.text(x - width / 2 + 10, ry + 6, item.detail || '', {
         fontFamily: FONT, fontSize: '8px', color: CSS.dim
       }).setOrigin(0, 0.5).setDepth(depth + 1)
-      const price = scene.add.text(x + width / 2 - 10, ry, item.price !== undefined ? `$${item.price}` : '', {
+      const price = scene.add.text(x + width / 2 - 10, ry, '', {
         fontFamily: FONT, fontSize: '8px', color: CSS.diner
       }).setOrigin(1, 0.5).setDepth(depth + 1)
       return { bg, label, detail, price }
@@ -43,15 +45,31 @@ export default class Menu {
       sfx('error')
       return
     }
-    this.items[this.cursor].action()
+    const item = this.items[this.cursor]
+    if (!item.action && item.adjust) {
+      this.adjust(1)
+      return
+    }
+    item.action()
     // The action may have closed the scene that owns this menu.
     if (this.rows[0].label.scene) this.refresh()
   }
 
+  adjust (dir) {
+    const item = this.items[this.cursor]
+    if (!dir || !item.adjust) return
+    item.adjust(dir)
+    sfx('select')
+    this.refresh()
+  }
+
   refresh () {
     this.rows.forEach((row, i) => {
+      const item = this.items[i]
       const on = i === this.cursor
       const ok = this.enabled(i)
+      if (item.value) row.price.setText(on ? `< ${item.value()} >` : item.value())
+      else if (item.price !== undefined) row.price.setText(`$${item.price}`)
       row.bg.setStrokeStyle(on ? 3 : 2, on ? COLORS.diner : COLORS.panelEdge)
       row.label.setColor(ok ? (on ? CSS.diner : CSS.white) : CSS.dim)
       row.price.setAlpha(ok ? 1 : 0.4)
@@ -62,6 +80,7 @@ export default class Menu {
   handle (inputs) {
     for (const inp of inputs) {
       this.move(inp.nav.y)
+      this.adjust(inp.nav.x)
       if (inp.pressed('interact')) {
         this.choose()
         return true

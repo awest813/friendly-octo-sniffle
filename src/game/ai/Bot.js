@@ -1,11 +1,19 @@
 import { TILE, MAP_TOP, TUNING } from '@/game/constants'
 import RunState from '@/game/state/RunState'
+import Settings from '@/game/state/settings'
 import { tileOf, key, findPath, standTiles } from '@/game/ai/grid'
 
 const STUCK_TIME = 0.6
 const MAX_REPATHS = 3
 // Whatever happens, a bot never sits on one task longer than this.
 const TASK_TIMEOUT = 8
+
+// think: pause after each action (reaction time). pace: movement speed scale.
+export const SKILLS = {
+  CHILL: { think: 0.6, pace: 0.8 },
+  NORMAL: { think: 0.25, pace: 0.92 },
+  SHARP: { think: 0.05, pace: 1 }
+}
 
 // Base for AI teammates. A brain's decide() returns a task:
 //   { target, mode: 'tap' | 'hold', until?, timeout?, then?, accept? }
@@ -20,6 +28,9 @@ export default class Bot {
     this.task = null
     this.wait = 0
     this.after = null
+    // Demo and autoplay runs show the bots at their best.
+    const showcase = scene.registry.get('demo') || scene.registry.get('autoplay')
+    this.skill = SKILLS[showcase ? 'SHARP' : Settings.aiSkill] || SKILLS.NORMAL
   }
 
   tap (target, then, accept) {
@@ -52,7 +63,10 @@ export default class Bot {
     }
     const result = this.run(this.task, dt)
     if (result === 'running') return
-    if (result === 'done' && this.task.then) this.after = this.task.then
+    if (result === 'done') {
+      if (this.task.then) this.after = this.task.then
+      this.wait = this.skill.think
+    }
     if (result === 'failed') this.wait = 0.25
     this.task = null
   }
@@ -96,7 +110,7 @@ export default class Bot {
     const dy = cy - feet.y
     const d = Math.hypot(dx, dy)
     if (d < 2) return true
-    const scale = Math.min(1, d / Math.max(1, this.speed() * dt))
+    const scale = Math.min(this.skill.pace, d / Math.max(1, this.speed() * dt))
     this.input.move.set(dx / d * scale, dy / d * scale)
     return false
   }

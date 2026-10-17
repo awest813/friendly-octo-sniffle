@@ -1,6 +1,10 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT } from '@/game/constants'
 import BootScene from '@/game/scenes/BootScene'
+import TitleScene from '@/game/scenes/TitleScene'
+import HowToPlayScene from '@/game/scenes/HowToPlayScene'
+import ScoresScene from '@/game/scenes/ScoresScene'
+import SettingsScene from '@/game/scenes/SettingsScene'
 import LobbyScene from '@/game/scenes/LobbyScene'
 import GameScene from '@/game/scenes/GameScene'
 import DraftScene from '@/game/scenes/DraftScene'
@@ -30,7 +34,8 @@ function launch (containerId) {
         debug: false
       }
     },
-    scene: [BootScene, LobbyScene, GameScene, DraftScene, ShopScene, GameOverScene]
+    // Order is draw order: overlays (Draft, Shop, Settings) come after the scenes they cover.
+    scene: [BootScene, TitleScene, HowToPlayScene, ScoresScene, LobbyScene, GameScene, DraftScene, ShopScene, GameOverScene, SettingsScene]
   })
 }
 

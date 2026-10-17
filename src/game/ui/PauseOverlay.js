@@ -32,8 +32,9 @@ export default class PauseOverlay {
       depth: DEPTH + 2,
       items: [
         { label: 'RESUME', action: actions.resume },
+        { label: 'SETTINGS', action: actions.settings },
         { label: 'RESTART RUN', action: actions.restart },
-        { label: 'QUIT TO LOBBY', action: actions.quit }
+        { label: 'QUIT TO TITLE', action: actions.quit }
       ]
     })
   }
