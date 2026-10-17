@@ -128,7 +128,7 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
 | 6 | Dinner Rush | 7 | 5 | 30 s | 12 s | all | — |
 | 7 | VIP Food Critic | 8 | 5 | 28 s | 11 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
 | 8 | Full House (Easy finale) | 10 | 6 | 26 s | 16 s (pairs) | all | every table open |
-| 9 | Night Owls | 9 | 6 | 26 s | 12 s | all | rusher-heavy crowd ; **draft before the wave** |
+| 9 | Night Owls | 9 | 6 | 26 s | 13 s | all | rusher-heavy crowd ; **draft before the wave** |
 | 10 | Bus Tour (Medium finale) | 9 | 6 | 27 s | 21 s (groups of 3) | all | granny-heavy tour groups: long patience, slow eaters, tables stay busy |
 | 11 | Critics Night | 10 | 6 | 25 s | 11 s | all | 3 critics ; **draft before the wave** |
 | 12 | Midnight Rush (Hard finale) | 12 | 6 | 24 s | 15 s (pairs) | all | 2 critics, extra rushers: everything at once |
