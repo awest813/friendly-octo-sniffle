@@ -11,6 +11,13 @@
 - HUD, shop, game over and high scores show the run's goal; old saved settings and scores move
   over to the new names.
 - Food patience ×2.05 (was ×1.9) after soak runs showed every loss came from guests waiting for food.
+- **AI cook fixes** (solo play and the demo): the cook could idle on a ticket it wrongly thought it
+  had sent when the Server served a more impatient guest first, and it never fetched a part stashed
+  on the spare assembly counter. Both caused guests to starve for no visible reason.
+- Pause menu shows the difficulty and how far into the night you are ("MEDIUM - WAVE 4 OF 10").
+- Smoother late curve: Full House sends a pair every 18 s (was 16 s); Night Owls has fewer rushers.
+- GitHub Pages: the deploy checks Pages is enabled with a clear error, and shared links get a
+  preview image.
 - Fixed overlaps on the Settings difficulty row, the wave-start pop-ups and the game-over pet icons.
 
 ## 0.9.0 — release candidate
