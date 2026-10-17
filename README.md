@@ -24,6 +24,8 @@ the second becomes the Server.
 
 The keyboard controls are a fallback for testing, or for playing with only one pad.
 
+**Playing alone?** Join one role, then press A (or your join key) again. An AI teammate takes the other role.
+
 ## How to play
 
 - **Cook:** take a plate from the stack and add a bun from its crate. Grill a patty (don't let it burn), add it to
@@ -46,6 +48,9 @@ npm run build   # production build into dist/
 npm start       # serve the production build at localhost:5000
 ```
 
+Open `localhost:8080/?autoplay` to watch two bots play a full run. Draft and shop choices are automatic, and
+per-wave stats are logged to the console, which makes it useful as a soak and balance test.
+
 All art is generated at boot from pixel strings (`src/game/art/`). Sound effects come from a tiny
 WebAudio synth (`src/game/audio/sfx.js`), so the game has no binary assets yet. In development builds,
 `window.__duo` exposes the Phaser game and `RunState` for debugging.
@@ -55,6 +60,7 @@ src/game/
 ├─ data/      map (ASCII layout), recipes, waves, power-ups
 ├─ art/       pixel sprites → generated textures
 ├─ input/     gamepad-first input with keyboard fallback and rumble
+├─ ai/        pathfinding + bot teammates (CookBot, ServerBot)
 ├─ state/     signal bus + run state
 ├─ entities/  players, customers, items
 ├─ stations/  crates, boards, grills, counters, plates, sink, bin, tables

@@ -6,7 +6,8 @@ const WALK_SPEED = 70
 const FOLLOW_GAP = 26
 
 // States: entering → queued → following → ready → waiting → eating → leaving
-// Any patience-ticking state (queued / ready / waiting) can turn into angry.
+// Any patience-ticking state (queued / following / ready / waiting) can turn
+// into angry. Following ticks at half speed.
 export default class Customer {
   constructor (scene, { x, y, texture, order, patience, critic }) {
     this.scene = scene
@@ -49,7 +50,7 @@ export default class Customer {
   }
 
   get ticking () {
-    return this.state === 'queued' || this.state === 'ready' || this.state === 'waiting'
+    return this.state === 'queued' || this.state === 'following' || this.state === 'ready' || this.state === 'waiting'
   }
 
   get ratio () {
@@ -94,7 +95,7 @@ export default class Customer {
 
     let expired = false
     if (this.ticking) {
-      this.patience -= dt * drain
+      this.patience -= dt * drain * (this.state === 'following' ? 0.5 : 1)
       expired = this.patience <= 0
     }
     if (this.state === 'eating') this.eatTimer -= dt

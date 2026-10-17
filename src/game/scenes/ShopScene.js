@@ -4,6 +4,7 @@ import { WAVES } from '@/game/data/waves'
 import PlayerInput from '@/game/input/PlayerInput'
 import Menu from '@/game/ui/Menu'
 import RunState from '@/game/state/RunState'
+import { allBots } from '@/game/state/scores'
 import { sfx } from '@/game/audio/sfx'
 
 // Between waves: spend tips (which are also your score) on survival.
@@ -64,6 +65,13 @@ export default class ShopScene extends Phaser.Scene {
     this.add.text(WIDTH / 2, 330, 'UP / DOWN + A TO BUY  -  B TO LEAVE', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
     const bindings = this.registry.get('bindings') || {}
     this.inputs = [new PlayerInput(this, 'cook', bindings.cook), new PlayerInput(this, 'server', bindings.server)]
+    if (allBots(this.registry)) this.time.delayedCall(700, () => this.autoShop(items))
+  }
+
+  // Bot-only runs: keep lives topped up, then a plate if affordable.
+  autoShop (items) {
+    items.slice(0, 2).forEach(item => { if (item.enabled()) item.action() })
+    this.finish()
   }
 
   buy (price, apply) {

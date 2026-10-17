@@ -3,6 +3,7 @@ import { WIDTH, HEIGHT, FONT, CSS, COLORS, SHOP } from '@/game/constants'
 import { draftOptions } from '@/game/data/powerups'
 import PlayerInput from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
+import { allBots } from '@/game/state/scores'
 import { sfx } from '@/game/audio/sfx'
 
 const CAT_COLOR = { COOK: COLORS.cook, SERVER: COLORS.server, DINER: COLORS.diner }
@@ -39,6 +40,8 @@ export default class DraftScene extends Phaser.Scene {
     this.add.text(WIDTH / 2, 322, 'LEFT / RIGHT TO CHOOSE  -  A TO PICK', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
     this.rerollText = this.add.text(WIDTH / 2, 340, '', { fontFamily: FONT, fontSize: '8px', color: CSS.dim }).setOrigin(0.5)
     this.buildCards()
+    // Nobody to choose in a bot-only run.
+    if (allBots(this.registry)) this.time.delayedCall(700, () => this.finish(this.cards[this.cursor].pu))
   }
 
   buildCards () {

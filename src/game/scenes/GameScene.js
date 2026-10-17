@@ -13,6 +13,9 @@ import PlayerInput, { PAD } from '@/game/input/PlayerInput'
 import Hud from '@/game/ui/Hud'
 import TicketRail from '@/game/ui/TicketRail'
 import PauseOverlay from '@/game/ui/PauseOverlay'
+import BotInput from '@/game/ai/BotInput'
+import CookBot from '@/game/ai/CookBot'
+import ServerBot from '@/game/ai/ServerBot'
 import { floatText, shake, banner } from '@/game/ui/fx'
 import RunState from '@/game/state/RunState'
 import bus from '@/game/state/bus'
@@ -53,9 +56,15 @@ export default class GameScene extends Phaser.Scene {
     this.buildMap()
 
     const bindings = this.registry.get('bindings') || { cook: null, server: null }
-    this.cook = new Player(this, 'cook', this.spawns.cook.x, this.spawns.cook.y, new PlayerInput(this, 'cook', bindings.cook))
-    this.server = new Player(this, 'server', this.spawns.server.x, this.spawns.server.y, new PlayerInput(this, 'server', bindings.server))
+    const ai = this.registry.get('ai') || {}
+    const inputFor = role => ai[role] ? new BotInput() : new PlayerInput(this, role, bindings[role])
+    this.cook = new Player(this, 'cook', this.spawns.cook.x, this.spawns.cook.y, inputFor('cook'))
+    this.server = new Player(this, 'server', this.spawns.server.x, this.spawns.server.y, inputFor('server'))
     this.players = [this.cook, this.server]
+    this.bots = []
+    if (ai.cook) this.bots.push(new CookBot(this, this.cook))
+    if (ai.server) this.bots.push(new ServerBot(this, this.server))
+    this.players.forEach(p => { if (ai[p.role]) p.tag.setText('AI') })
     this.physics.add.collider([this.cook.body, this.server.body], this.solids)
     this.physics.add.collider(this.cook.body, this.cookOnly)
     this.physics.add.collider(this.cook.body, this.server.body)
@@ -109,8 +118,8 @@ export default class GameScene extends Phaser.Scene {
         else if (ch === 'G') this.addStation(new Grill(this, tx, ty))
         else if (ch === 'g') this.spare = this.addStation(new Counter(this, tx, ty))
         else if (ch === 'C') this.addStation(new Board(this, tx, ty))
-        else if (ch === 'c') this.addStation(new Counter(this, tx, ty))
-        else if (ch === '=') this.addStation(new Counter(this, tx, ty, 'pass'))
+        else if (ch === 'c') this.addStation(new Counter(this, tx, ty)).assembly = true
+        else if (ch === '=') this.addStation(new Counter(this, tx, ty, 'pass')).isPass = true
         else if (ch === 'K') this.plateStack = this.addStation(new PlateStack(this, tx, ty))
         else if (ch === 'S') sinks.push([tx, ty])
         else if (ch === 'X') this.addStation(new Bin(this, tx, ty))
@@ -236,6 +245,9 @@ export default class GameScene extends Phaser.Scene {
     const n = RunState.wave
     RunState.wavesCleared = n
     RunState.calm = false
+    if (this.registry.get('autoplay')) {
+      console.info('[duo] wave cleared', n, JSON.stringify({ served: RunState.served, angry: RunState.angry, lives: RunState.lives, tips: RunState.tips, mods: [...RunState.modifiers] }))
+    }
     bus.emit('wave_cleared', { wave: n })
     sfx('wave')
     if (n === WIN_WAVE) {
@@ -631,6 +643,7 @@ export default class GameScene extends Phaser.Scene {
 
   update (time, delta) {
     const dt = Math.min(delta / 1000, 0.05)
+    if (!this.paused && !this.over) this.bots.forEach(b => b.tick(dt))
     this.players.forEach(p => p.input.update())
     if (this.paused) {
       this.updatePaused()

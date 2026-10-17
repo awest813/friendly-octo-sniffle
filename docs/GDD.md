@@ -11,7 +11,7 @@ controls**, and resolves the contradictions in v0.9 (see
 
 | | |
 |---|---|
-| Players | 2, local, same screen |
+| Players | 2, local, same screen (or 1 + AI teammate) |
 | Controls | 2 gamepads (keyboard fallback for dev / missing pad) |
 | Session | ~18 min run |
 | Engine | Phaser 3.90, Vue 3 host |
@@ -32,7 +32,7 @@ Customer arrives → queues at entrance
 ```
 
 - **Fail state:** 3 lives. Each customer whose patience runs out leaves angry: −1 life. 0 lives = run over.
-- **Patience** refills at every service step (queued → seated → ordered). The food step gets 1.5× patience because it takes the longest.
+- **Patience** refills at every service step (queued → seated → ordered). The food step gets 1.5× patience because it takes the longest. A customer following the Server to a table loses patience at half speed, so leading someone around with no free table isn't free.
 - **Tips:** $5 base + up to $5 speed bonus (proportional to patience left), × modifiers.
 - **Juice:** ticket ding, sizzle, tip pop, screen shake + gamepad rumble on burns and wrong deliveries.
 - **Loop tension:** the Cook can't leave the kitchen; the Server has to come *into* the kitchen to drop dirty plates at the sink, through a one-tile doorway. Collisions between the two players are on.
@@ -54,7 +54,9 @@ Standard-mapping pads (Xbox / PlayStation / Switch Pro in browser). The two
 
 - **Rumble** (`vibrationActuator`, where the browser supports it) on: wrong delivery, burnt food, angry customer, life lost. Every rumble also triggers a screen shake, so keyboard players get the same feedback.
 - A pad disconnecting pauses the game. That role resumes by pressing A on the same pad after it's plugged back in, on any other free pad, or on its keyboard key (Space/Enter).
-- Keyboard fallback exists so one person can test alone, or so a group with only one pad can still play (pad + keyboard).
+- Keyboard fallback exists so a group with only one pad can still play (pad + keyboard).
+- **Solo with an AI teammate:** join one role, then press A again. The empty role is played by a bot that uses the same controls and rules as a human: it walks to stations, faces them and presses A or holds X. It's tuned to be a solid partner, not a perfect one.
+- `?autoplay` in the URL runs bot vs bot, picking draft cards and shopping automatically, and logs per-wave stats to the console. It's for soak and balance testing.
 
 ## 3. Roles
 
@@ -147,7 +149,8 @@ src/
    ├─ art/                   pixel-string sprites → generated textures (no binary assets)
    ├─ audio/sfx.js           tiny WebAudio synth (ding, sizzle, pop, error)
    ├─ input/PlayerInput.js   gamepad-first input with keyboard fallback + rumble
-   ├─ state/                 bus.js (signal bus), RunState.js (lives/tips/wave/modifiers)
+   ├─ ai/                    grid + BFS pathing, BotInput, Bot task runner, CookBot, ServerBot
+   ├─ state/                 bus.js (signal bus), RunState.js (lives/tips/wave/modifiers), scores.js (local top 5)
    ├─ entities/              Player, Customer, items
    ├─ stations/              Crate, Counter, Hook, Board, Grill, PlateStack, Sink, Bin, Table
    ├─ ui/                    Hud, TicketRail, Menu, PauseOverlay, fx
@@ -191,12 +194,18 @@ Godot → Phaser mapping used:
 - [x] Pause menu (resume / restart / quit) and pad-disconnect pause with rebinding
 - [x] Per-wave hint line
 
-**Slice 3 — next**
-- [ ] Real playtest on two pads and balance pass on wave 4–8 numbers
+**Slice 3 — solo + polish**
+- [x] AI teammate for solo play (Cook or Server), and a bot-vs-bot autoplay mode
+- [x] Soak test: full bot runs through wave 8 and into Closing Time with no errors, used for the balance pass below
+- [x] Critic tickets marked VIP in gold; tickets flash red under 20% patience
+- [x] Following customers lose patience at half speed
+- [x] Local top-5 high scores (tips), shown on game over and in the lobby
+
+**Slice 4 — next**
+- [ ] Real playtest on two pads; tune against human numbers (bots are a floor, not a ceiling)
 - [ ] Chop timing mini-game (hit X in the sweet spot for a speed bonus)
-- [ ] Ticket rail sorting by urgency, critic tickets highlighted
 - [ ] Real art pass, music
-- [ ] Local high-score table (tips) per run
+- [ ] Attract mode: bots play in the lobby background after 30 s idle
 
 ## Changes from v0.9
 

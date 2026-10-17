@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { WIDTH, HEIGHT, COLORS, CSS, FONT } from '@/game/constants'
 import { PAD, nativePadConnected } from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
+import { loadScores } from '@/game/state/scores'
 import { initSfx, sfx } from '@/game/audio/sfx'
 
 const ROLES = ['cook', 'server']
@@ -11,13 +12,16 @@ const INFO = {
   server: { title: 'SERVER', color: CSS.server, tint: COLORS.server, x: 440, keys: 'KEYS: ARROWS, ENTER, SHIFT' }
 }
 
-// First pad to press A is the Cook, second is the Server. Keyboard joins as a fallback.
+// First pad to press A is the Cook, second is the Server. Keyboard joins as a
+// fallback. Pressing A again with one role empty starts with an AI in it.
+// `?autoplay` in the URL starts a bot-vs-bot run (soak and balance testing).
 export default class LobbyScene extends Phaser.Scene {
   constructor () {
     super({ key: 'LobbyScene' })
   }
 
   create () {
+    this.starting = false
     initSfx(this)
     this.cameras.main.setBackgroundColor(COLORS.bg)
     const prev = this.registry.get('bindings') || {}
@@ -30,6 +34,10 @@ export default class LobbyScene extends Phaser.Scene {
     this.add.text(WIDTH / 2, 38, 'DUO', { fontFamily: FONT, fontSize: '32px', color: CSS.white }).setOrigin(0.5)
     this.add.text(WIDTH / 2, 76, 'DINER', { fontFamily: FONT, fontSize: '32px', color: CSS.cook }).setOrigin(0.5)
     this.add.text(WIDTH / 2, 108, 'ONE COOKS. ONE SERVES. BOTH PANIC.', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
+    const best = loadScores()[0]
+    if (best) {
+      this.add.text(WIDTH / 2, 124, `BEST: $${best.tips} - WAVE ${best.waves} (${best.mode})`, { fontFamily: FONT, fontSize: '8px', color: CSS.dim }).setOrigin(0.5)
+    }
 
     this.cards = {}
     ROLES.forEach(role => {
@@ -52,6 +60,10 @@ export default class LobbyScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-SPACE', () => this.onKey('cook'))
     this.input.keyboard.on('keydown-ENTER', () => this.onKey('server'))
     this.refresh()
+
+    const autoplay = new URLSearchParams(window.location.search).has('autoplay')
+    this.registry.set('autoplay', autoplay)
+    if (autoplay) this.time.delayedCall(300, () => this.start(true))
   }
 
   padAlive (index) {
@@ -77,7 +89,7 @@ export default class LobbyScene extends Phaser.Scene {
     }
     if (button !== PAD.A && button !== PAD.START) return
     if (!role) {
-      const free = ROLES.find(r => this.slots[r].pad === null)
+      const free = ROLES.find(r => !this.ready(r)) || ROLES.find(r => this.slots[r].pad === null)
       if (free) {
         this.slots[free].pad = pad.index
         this.slots[free].keys = false
@@ -86,7 +98,7 @@ export default class LobbyScene extends Phaser.Scene {
         return
       }
     }
-    if (this.bothReady()) this.start()
+    if (this.anyReady()) this.start()
   }
 
   onKey (role) {
@@ -96,26 +108,41 @@ export default class LobbyScene extends Phaser.Scene {
       this.refresh()
       return
     }
-    if (this.bothReady()) this.start()
+    this.start()
   }
 
   bothReady () {
     return ROLES.every(r => this.ready(r))
   }
 
+  anyReady () {
+    return ROLES.some(r => this.ready(r))
+  }
+
   refresh () {
     ROLES.forEach(role => {
       const s = this.slots[role]
       const card = this.cards[role]
-      const text = s.pad !== null ? `PAD ${s.pad + 1} READY` : s.keys ? 'KEYBOARD READY' : 'PRESS A TO JOIN'
+      let text = s.pad !== null ? `PAD ${s.pad + 1} READY` : s.keys ? 'KEYBOARD READY' : 'PRESS A TO JOIN'
+      if (!this.ready(role) && this.anyReady()) text = 'JOIN, OR AI PLAYS'
       card.status.setText(text).setColor(this.ready(role) ? card.info.color : CSS.white)
       card.panel.setStrokeStyle(2, this.ready(role) ? card.info.tint : COLORS.panelEdge)
     })
-    this.prompt.setText(this.bothReady() ? 'PRESS A / START TO OPEN THE DINER' : 'FIRST PAD = COOK  -  SECOND PAD = SERVER  -  B TO LEAVE')
+    const empty = ROLES.find(r => !this.ready(r))
+    let prompt = 'FIRST PAD = COOK  -  SECOND PAD = SERVER  -  B TO LEAVE'
+    if (this.bothReady()) prompt = 'PRESS A / START TO OPEN THE DINER'
+    else if (this.anyReady()) prompt = `PRESS A AGAIN TO PLAY WITH AN AI ${INFO[empty].title}`
+    this.prompt.setText(prompt)
   }
 
-  start () {
+  start (allBots = false) {
+    if (this.starting) return
+    this.starting = true
     sfx('wave')
+    this.registry.set('ai', {
+      cook: allBots || !this.ready('cook'),
+      server: allBots || !this.ready('server')
+    })
     this.registry.set('bindings', { cook: this.slots.cook.pad, server: this.slots.server.pad })
     this.registry.set('keyboard', { cook: this.slots.cook.keys, server: this.slots.server.keys })
     RunState.reset()
@@ -125,6 +152,6 @@ export default class LobbyScene extends Phaser.Scene {
   update () {
     const n = this.input.gamepad ? this.input.gamepad.getAll().filter(p => nativePadConnected(p.index)).length : 0
     this.pads.setText(n ? `${n} GAMEPAD${n > 1 ? 'S' : ''} CONNECTED` : 'NO GAMEPAD? PRESS A BUTTON ON IT, OR USE SPACE / ENTER')
-    this.prompt.setAlpha(this.bothReady() ? 0.6 + 0.4 * Math.sin(this.time.now / 150) : 1)
+    this.prompt.setAlpha(this.anyReady() ? 0.6 + 0.4 * Math.sin(this.time.now / 150) : 1)
   }
 }
