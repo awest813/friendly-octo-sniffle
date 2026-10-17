@@ -58,6 +58,20 @@ Standard-mapping pads (Xbox / PlayStation / Switch Pro in browser). The two
 - **Solo with an AI teammate:** join one role, then press A again. The empty role is played by a bot that uses the same controls and rules as a human: it walks to stations, faces them and presses A or holds X. It's tuned to be a solid partner, not a perfect one.
 - `?autoplay` in the URL runs bot vs bot, picking draft cards and shopping automatically, and logs per-wave stats to the console. It's for soak and balance testing.
 
+### Front end
+
+```
+Launcher (loading / crash screen) → Title: "PRESS ANY BUTTON" → main menu
+  PLAY → Lobby (join with A, A again = AI teammate, Y = AI skill, B = back) → Game
+  HOW TO PLAY (5 pages) · SETTINGS · HIGH SCORES
+  idle 30 s → attract demo (bots play; any button returns)
+```
+
+- The splash doubles as the user gesture browsers require before audio plays. Gamepad buttons don't count as one, so the title shows a "click or press a key for sound" hint until audio is running.
+- **Settings** (saved locally): SFX and music volume, screen shake, gamepad rumble, AI teammate skill, fullscreen. Reachable from the title and the pause menu.
+- **AI skill:** Chill (0.6 s reaction, 80% pace), Normal (0.25 s, 92%), Sharp (0.05 s, 100%). The demo and `?autoplay` always use Sharp.
+- The game auto-pauses when the window loses focus.
+
 ## 3. Roles
 
 ### The Cook — kitchen-locked (cyan)
@@ -201,11 +215,19 @@ Godot → Phaser mapping used:
 - [x] Following customers lose patience at half speed
 - [x] Local top-5 high scores (tips), shown on game over and in the lobby
 
-**Slice 4 — next**
+**Slice 4 — ready for players**
+- [x] Title screen, main menu, How to Play, Settings, High Scores, attract demo
+- [x] AI teammate skill levels, picked in the lobby or in Settings
+- [x] Procedural music (menu and in-game), ducked while paused
+- [x] Launcher: loading screen, load-failure and crash screens, fullscreen button (F), touch-device notice, favicon and page metadata
+- [x] Auto-pause on window blur; inputs ignore buttons still held from the previous screen
+- [x] GitHub Pages workflow (build on PR, deploy master); relative asset paths
+
+**Next**
 - [ ] Real playtest on two pads; tune against human numbers (bots are a floor, not a ceiling)
 - [ ] Chop timing mini-game (hit X in the sweet spot for a speed bonus)
-- [ ] Real art pass, music
-- [ ] Attract mode: bots play in the lobby background after 30 s idle
+- [ ] Real art pass
+- [ ] Rebindable controls
 
 ## Changes from v0.9
 
