@@ -5,12 +5,20 @@ const KEY = 'duo-diner:settings'
 
 export const AI_SKILLS = ['CHILL', 'NORMAL', 'SHARP']
 
-// RELAXED is a first-class way to play, not a penalty box: same content,
-// more breathing room. FRANTIC pays a little extra for the extra pressure.
+// Difficulty sets how long the night is (`waves` to save the diner) and how
+// much breathing room each wave has. EASY is a first-class way to play, not a
+// penalty box. HARD pays a little extra for the extra pressure.
 export const DIFFICULTIES = {
-  RELAXED: { patience: 1.4, spawn: 1.25, tips: 1 },
-  NORMAL: { patience: 1, spawn: 1, tips: 1 },
-  FRANTIC: { patience: 0.85, spawn: 0.9, tips: 1.25 }
+  EASY: { waves: 8, patience: 1.4, spawn: 1.25, tips: 1 },
+  MEDIUM: { waves: 10, patience: 1, spawn: 1, tips: 1 },
+  HARD: { waves: 12, patience: 0.9, spawn: 0.95, tips: 1.25 }
+}
+
+// Names used before 0.10, still found in saved settings and scores.
+const LEGACY = { RELAXED: 'EASY', NORMAL: 'MEDIUM', FRANTIC: 'HARD' }
+
+export function difficultyName (name) {
+  return LEGACY[name] || name
 }
 
 const DEFAULTS = {
@@ -19,14 +27,17 @@ const DEFAULTS = {
   shake: true,
   rumble: true,
   aiSkill: 'NORMAL',
-  difficulty: 'NORMAL',
+  difficulty: 'MEDIUM',
   prompts: true
 }
 
 function load () {
   try {
     const saved = JSON.parse(window.localStorage.getItem(KEY) || '{}')
-    return { ...DEFAULTS, ...(saved && typeof saved === 'object' ? saved : {}) }
+    const s = { ...DEFAULTS, ...(saved && typeof saved === 'object' ? saved : {}) }
+    s.difficulty = difficultyName(s.difficulty)
+    if (!DIFFICULTIES[s.difficulty]) s.difficulty = DEFAULTS.difficulty
+    return s
   } catch (e) {
     return { ...DEFAULTS }
   }

@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, FONT, CSS, TUNING, SHOP } from '@/game/constants'
-import { WAVES } from '@/game/data/waves'
+import { waveFor } from '@/game/data/waves'
 import PlayerInput from '@/game/input/PlayerInput'
 import Menu from '@/game/ui/Menu'
 import RunState from '@/game/state/RunState'
@@ -26,7 +26,7 @@ export default class ShopScene extends Phaser.Scene {
     }).setOrigin(0.5)
     this.tipsText = this.add.text(WIDTH / 2, 76, '', { fontFamily: FONT, fontSize: '8px', color: CSS.diner }).setOrigin(0.5)
 
-    const next = WAVES[Math.min(RunState.wave + 1, WAVES.length) - 1]
+    const next = waveFor(RunState.wave + 1, RunState.goal)
     const prices = {
       // 30, 50, 80, 120... (steps of 20, 30, 40) with each life bought this run.
       life: RunState.price(SHOP.life + SHOP.lifeStep / 4 * RunState.livesBought * (RunState.livesBought + 3)),

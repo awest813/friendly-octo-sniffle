@@ -14,8 +14,9 @@ const PAGES = [
       'Run a diner together. One of you cooks,',
       'the other runs the floor.',
       '',
-      'Survive 8 waves of hungry customers to save',
-      'the diner, then hold out through Closing Time.',
+      'Survive the night to save the diner: 8 waves',
+      'on EASY, 10 on MEDIUM, 12 on HARD. Then hold',
+      'out through Closing Time.',
       '',
       'Each customer who runs out of patience walks',
       'out angry. Three walkouts and the run is over.',
@@ -121,7 +122,7 @@ const PAGES = [
       'tip triple. Serve them first.',
       '',
       'Between waves: spend tips in the shop. Before',
-      'waves 3, 5 and 7: draft a power-up. Y rerolls.'
+      'waves 3, 5, 7, 9 and 11: draft a power-up.'
     ]
   }
 ]

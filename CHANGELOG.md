@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.10.0
+
+- **Difficulty is now run length:** Easy saves the diner after 8 waves, Medium after 10 and Hard
+  after 12. The last wave is billed as the FINALE. Easy keeps the old Relaxed breathing room; Hard
+  is a little gentler per wave than Frantic was (×0.9 patience), since the night is longer.
+- **Four new waves:** Night Owls (rusher crowd), Bus Tour (granny tour groups of 3), Critics Night
+  (3 VIPs) and Midnight Rush (pairs, VIPs and rushers at once). Drafts now also come before
+  waves 9 and 11. Closing Time starts no gentler than your finale.
+- HUD, shop, game over and high scores show the run's goal; old saved settings and scores move
+  over to the new names.
+- Food patience ×2.05 (was ×1.9) after soak runs showed every loss came from guests waiting for food.
+- Fixed overlaps on the Settings difficulty row, the wave-start pop-ups and the game-over pet icons.
+
 ## 0.9.0 — release candidate
 
 First public build: a full run from the title screen to the run-over screen.

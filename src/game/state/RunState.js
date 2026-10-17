@@ -21,11 +21,16 @@ const RunState = {
     this.livesBought = 0
     this.petted = 0
     // Locked in for the whole run so it can't be changed mid-way.
-    this.difficulty = DIFFICULTIES[Settings.difficulty] ? Settings.difficulty : 'NORMAL'
+    this.difficulty = DIFFICULTIES[Settings.difficulty] ? Settings.difficulty : 'MEDIUM'
   },
 
   get diff () {
     return DIFFICULTIES[this.difficulty]
+  },
+
+  // Waves to clear to save the diner: 8 / 10 / 12 by difficulty.
+  get goal () {
+    return this.diff.waves
   },
 
   // Each serve without a walkout adds 5% to tips, up to +50%

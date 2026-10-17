@@ -3,8 +3,8 @@
 **One Cooks. One Serves. Both Panic.**
 
 A couch co-op diner roguelike for two players on one screen. One of you runs the kitchen, the other
-runs the floor. Survive 8 waves of hungry customers, draft power-ups, keep the grill from catching
-fire, then hold out through the endless Closing Time for a high score.
+runs the floor. Survive 8, 10 or 12 waves of hungry customers (Easy, Medium or Hard), draft
+power-ups, keep the grill from catching fire, then hold out through the endless Closing Time for a high score.
 
 Best with **two gamepads**. A keyboard works too, and if you're alone an **AI teammate** takes the
 other role.
@@ -19,8 +19,8 @@ other role.
 2. Choose **PLAY**. The first pad to press **A** is the Cook, the second is the Server.
 3. Playing solo? Join one role, then press **A** again. An AI teammate plays the other role. Press
    **Y** in the lobby to change how sharp it plays (Chill / Normal / Sharp).
-4. Press **X** in the lobby to pick a difficulty: **Relaxed** (more patience, same content),
-   **Normal** or **Frantic** (tighter, +25% tips).
+4. Press **X** in the lobby to pick a difficulty: **Easy** (8 waves, more patience),
+   **Medium** (10 waves) or **Hard** (12 waves, tighter, +25% tips).
 
 While you play, a small prompt over whatever you're facing tells you what your button does there
 ("A: GRAB BUN", "X: HOLD TO CHOP", "A: SEAT GUEST"). You can turn it off in Settings.
@@ -64,7 +64,7 @@ disconnect, press A on any free pad, or that role's keyboard key.
   big, VIP critics tip triple, and a glittering BIG TIPPER turns up now and then.
 - **Rewards:** every serve in a row grows your streak (up to +50% tips). Serve fast for PERFECT,
   save a guest at the last second for CLUTCH. Each wave is rated out of 3 stars, with bonus tips.
-  Power-up drafts come before waves 3, 5 and 7.
+  Power-up drafts come before waves 3, 5, 7, 9 and 11.
 - **Diner pets:** after every 5th wave it's Adoption Day. Take home a shelter dog or cat (free,
   for the whole run): each brings a bonus like calmer guests, bigger tips or more luck. Walk up and
   press A to pet them for a patience boost for every waiting guest.
@@ -93,7 +93,8 @@ npm start       # serve the production build at localhost:5000
 ```
 
 - `localhost:8080/?autoplay` runs bot vs bot through full runs, choosing draft cards and shop items
-  automatically and logging per-wave stats to the console. It's the soak and balance test.
+  automatically and logging per-wave stats to the console. It's the soak and balance test. Add
+  `&diff=EASY`, `MEDIUM` or `HARD` to pick the difficulty.
 - In development builds, `window.__duo` exposes the Phaser game and `RunState`.
 - All art is generated at boot from pixel strings (`src/game/art/`). Sound effects and music come
   from a small WebAudio synth (`src/game/audio/`), so there are no binary assets.

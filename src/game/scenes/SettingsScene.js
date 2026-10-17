@@ -39,8 +39,8 @@ export default class SettingsScene extends Phaser.Scene {
     const items = [
       {
         label: 'DIFFICULTY',
-        detail: 'Frantic pays +25% tips.',
-        value: () => Settings.difficulty,
+        detail: 'Waves to win. Hard pays +25% tips.',
+        value: () => `${Settings.difficulty} (${DIFFICULTIES[Settings.difficulty].waves})`,
         adjust: d => cycle('difficulty', diffs, d)
       },
       { label: 'BUTTON PROMPTS', ...toggle('prompts') },

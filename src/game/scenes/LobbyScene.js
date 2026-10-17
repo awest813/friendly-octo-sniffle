@@ -73,8 +73,12 @@ export default class LobbyScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-FORWARD_SLASH', e => !e.repeat && this.cycleSkill())
     this.refresh()
 
-    const autoplay = new URLSearchParams(window.location.search).has('autoplay')
+    const params = new URLSearchParams(window.location.search)
+    const autoplay = params.has('autoplay')
     this.registry.set('autoplay', autoplay)
+    // Soak runs can pick a difficulty (?autoplay&diff=HARD) without saving it.
+    const diff = (params.get('diff') || '').toUpperCase()
+    if (autoplay && DIFFICULTIES[diff]) Settings.difficulty = diff
     if (autoplay) this.time.delayedCall(300, () => this.start(true))
   }
 
@@ -188,7 +192,7 @@ export default class LobbyScene extends Phaser.Scene {
     if (this.bothReady()) prompt = 'PRESS A / START TO OPEN THE DINER'
     else if (this.anyReady()) prompt = `A AGAIN: PLAY WITH AI ${INFO[empty].title}  -  Y: AI SKILL`
     this.prompt.setText(prompt)
-    this.diffText.setText(`DIFFICULTY: ${Settings.difficulty}  (X / E TO CHANGE)`)
+    this.diffText.setText(`DIFFICULTY: ${Settings.difficulty} - ${DIFFICULTIES[Settings.difficulty].waves} WAVES  (X / E TO CHANGE)`)
   }
 
   start (allBots = false) {

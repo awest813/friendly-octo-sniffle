@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, TILE, MAP_TOP, COLORS, TUNING, FONT } from '@/game/constants'
 import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL } from '@/game/data/map'
-import { WAVES, WIN_WAVE, CRITIC } from '@/game/data/waves'
+import { waveFor, CRITIC } from '@/game/data/waves'
 import { GUESTS, rollGuest } from '@/game/data/guests'
 import { PET_BY_ID, ADOPT_EVERY, ENDLESS_ADOPT_SERVED } from '@/game/data/pets'
 import Pet from '@/game/entities/Pet'
@@ -222,7 +222,7 @@ export default class GameScene extends Phaser.Scene {
   // --- waves ---------------------------------------------------------------
 
   waveConfig (n) {
-    return WAVES[Math.min(n, WAVES.length) - 1]
+    return waveFor(n, RunState.goal)
   }
 
   nextWave () {
@@ -259,7 +259,7 @@ export default class GameScene extends Phaser.Scene {
     setMusicIntensity(1)
     this.waveActive = true
     this.tables.forEach((t, i) => t.setOpen(t.open || i < cfg.tables))
-    banner(this, cfg.endless ? 'CLOSING TIME' : `WAVE ${n}`, `${cfg.name} - ${cfg.tag}`)
+    banner(this, cfg.endless ? 'CLOSING TIME' : `WAVE ${n}`, `${cfg.name} - ${n === RunState.goal ? 'FINALE' : cfg.tag}`)
     sfx('wave')
     bus.emit('wave_started', { wave: n, config: cfg })
   }
@@ -296,7 +296,7 @@ export default class GameScene extends Phaser.Scene {
     const critic = this.criticsLeft > 0 && Math.random() < this.criticsLeft / remaining
     if (critic) this.criticsLeft--
     const variants = this.registry.get('customerVariants')
-    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave, this.hasPet('pepper') ? 2 : 1)
+    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave, this.hasPet('pepper') ? 2 : 1, cfg.mix)
     const menu = guest.orders ? cfg.recipes.filter(r => guest.orders.includes(r)) : cfg.recipes
     const c = new Customer(this, {
       x: this.entrance.x + TILE + offset * 18,
@@ -349,8 +349,8 @@ export default class GameScene extends Phaser.Scene {
     RunState.tips += bonus
     RunState.stars += stars
     showReportCard(this, {
-      title: n === WIN_WAVE ? 'DINER SAVED!' : `WAVE ${n} CLEAR`,
-      subtitle: n === WIN_WAVE ? 'NOW SURVIVE CLOSING TIME' : this.waveCfg.name,
+      title: n === RunState.goal ? 'DINER SAVED!' : `WAVE ${n} CLEAR`,
+      subtitle: n === RunState.goal ? 'NOW SURVIVE CLOSING TIME' : this.waveCfg.name,
       stats: this.waveStats,
       streak: RunState.streak,
       stars,
@@ -731,7 +731,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.over) return
     this.over = true
     this.waveActive = false
-    const won = RunState.wavesCleared >= WIN_WAVE
+    const won = RunState.wavesCleared >= RunState.goal
     bus.emit('run_over', { won })
     this.players.forEach(p => p.body.setVelocity(0, 0))
     banner(this, won ? 'LAST CALL!' : 'RUN OVER', won ? 'THE DINER CLOSES' : 'TOO MANY ANGRY CUSTOMERS', won ? '#ffd93d' : '#ff4040', 1800)

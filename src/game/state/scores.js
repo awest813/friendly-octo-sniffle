@@ -26,6 +26,11 @@ export function addScore (entry) {
   return rank < MAX ? rank : -1
 }
 
+// Runs from before 0.10 had no `goal`; back then 8 waves saved the diner.
+export function savedDiner (entry) {
+  return entry.waves >= (entry.goal || 8)
+}
+
 export function allBots (registry) {
   const ai = registry.get('ai') || {}
   return !!(ai.cook && ai.server)

@@ -1,5 +1,4 @@
 import { FONT, COLORS, TUNING, WIDTH, MAP_TOP } from '@/game/constants'
-import { WIN_WAVE } from '@/game/data/waves'
 import RunState from '@/game/state/RunState'
 
 export default class Hud {
@@ -36,7 +35,7 @@ export default class Hud {
       this.progress.fillStyle(0x00ffd0, 1).fillRect(6, 16, Math.round(128 * Math.min(1, progress)), 3)
     }
     const w = RunState.wave
-    this.wave.setText(w > WIN_WAVE ? 'CLOSING' : `WAVE ${w}/${WIN_WAVE}`)
+    this.wave.setText(w > RunState.goal ? 'CLOSING' : `WAVE ${w}/${RunState.goal}`)
     // Streak multiplier: visible whenever it's doing something for you.
     this.streak.setText(RunState.streak >= 2 ? `x${RunState.streakMult().toFixed(2)}` : '')
     this.hearts.forEach((h, i) => h.setTexture(i < RunState.lives ? 'heart' : 'heart_empty'))

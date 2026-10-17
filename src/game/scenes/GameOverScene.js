@@ -1,9 +1,9 @@
 import Phaser from 'phaser'
 import { WIDTH, FONT, CSS, COLORS } from '@/game/constants'
-import { WIN_WAVE } from '@/game/data/waves'
 import PlayerInput from '@/game/input/PlayerInput'
 import RunState from '@/game/state/RunState'
-import { loadScores, addScore, allBots } from '@/game/state/scores'
+import { loadScores, addScore, allBots, savedDiner } from '@/game/state/scores'
+import { difficultyName } from '@/game/state/settings'
 import { PET_BY_ID } from '@/game/data/pets'
 import { sfx } from '@/game/audio/sfx'
 import { playMusic } from '@/game/audio/music'
@@ -22,14 +22,14 @@ export default class GameOverScene extends Phaser.Scene {
     playMusic('menu')
     const title = this.won ? 'DINER SAVED' : 'RUN OVER'
     this.add.text(WIDTH / 2, 40, title, { fontFamily: FONT, fontSize: '24px', color: this.won ? CSS.diner : CSS.danger }).setOrigin(0.5)
-    const sub = this.won ? 'SURVIVED THE NIGHT. CLOSING TIME SCORE BELOW.' : 'ONE COOKED. ONE SERVED. BOTH PANICKED.'
+    const sub = this.won ? `SURVIVED ${RunState.goal} WAVES ON ${RunState.difficulty}. CLOSING TIME SCORE BELOW.` : 'ONE COOKED. ONE SERVED. BOTH PANICKED.'
     this.add.text(WIDTH / 2, 68, sub, { fontFamily: FONT, fontSize: '8px', color: CSS.dim }).setOrigin(0.5)
 
-    const waves = Math.min(RunState.wavesCleared, WIN_WAVE)
+    const waves = Math.min(RunState.wavesCleared, RunState.goal)
     // Personal bests are about your own progress, compared with nobody else.
     const prevBestStreak = loadScores().reduce((m, s) => Math.max(m, s.streak || 0), 0)
     const rows = [
-      ['WAVES CLEARED', `${waves}/${WIN_WAVE}`],
+      ['WAVES CLEARED', `${waves}/${RunState.goal}`],
       ['SERVED / PERFECT', `${RunState.served} / ${RunState.perfect}`],
       ['BEST STREAK', `${RunState.bestStreak}`],
       ['STARS EARNED', `${RunState.stars}`],
@@ -53,7 +53,7 @@ export default class GameOverScene extends Phaser.Scene {
     const bots = allBots(this.registry)
     const ai = this.registry.get('ai') || {}
     const mode = bots ? 'BOTS' : ai.cook || ai.server ? 'SOLO' : '2P'
-    const entry = { tips: RunState.tips, waves, mode, diff: RunState.difficulty, streak: RunState.bestStreak }
+    const entry = { tips: RunState.tips, waves, goal: RunState.goal, mode, diff: RunState.difficulty, streak: RunState.bestStreak }
     const rank = bots ? -1 : addScore(entry)
     this.drawScores(rank, !bots && newStreak)
 
@@ -87,8 +87,8 @@ export default class GameOverScene extends Phaser.Scene {
       const y = 220 + i * 16
       const mine = i === rank
       const color = mine ? CSS.diner : CSS.white
-      this.add.text(WIDTH / 2 - 150, y, `${i + 1}. ${s.mode}${s.diff && s.diff !== 'NORMAL' ? ' ' + s.diff : ''}`, { fontFamily: FONT, fontSize: '8px', color })
-      this.add.text(WIDTH / 2 + 20, y, `WAVE ${s.waves}`, { fontFamily: FONT, fontSize: '8px', color }).setOrigin(0.5, 0)
+      this.add.text(WIDTH / 2 - 150, y, `${i + 1}. ${s.mode} ${difficultyName(s.diff || 'MEDIUM')}`, { fontFamily: FONT, fontSize: '8px', color })
+      this.add.text(WIDTH / 2 + 20, y, savedDiner(s) ? 'SAVED' : `WAVE ${s.waves}`, { fontFamily: FONT, fontSize: '8px', color }).setOrigin(0.5, 0)
       this.add.text(WIDTH / 2 + 150, y, `$${s.tips}`, { fontFamily: FONT, fontSize: '8px', color }).setOrigin(1, 0)
     })
   }

@@ -2,7 +2,7 @@
 
 > **One Cooks. One Serves. Both Panic.**
 > PlateUp! × Diner Dash couch co-op roguelike. Two gamepads, one screen.
-> Survive 8 waves to save the diner, then hold out through Closing Time for a high score.
+> Survive the night to save the diner (8 waves on Easy, 10 on Medium, 12 on Hard), then hold out through Closing Time for a high score.
 
 Adapted from the original v0.9 alpha GDD (written for Godot 4.3). This version
 targets **Phaser 3 + Vue 3** (this repo), makes **two gamepads the primary
@@ -13,7 +13,7 @@ controls**, and resolves the contradictions in v0.9 (see
 |---|---|
 | Players | 2, local, same screen (or 1 + AI teammate) |
 | Controls | 2 gamepads (keyboard fallback for dev / missing pad) |
-| Session | ~18 min run |
+| Session | ~18 / 23 / 28 min run (Easy / Medium / Hard) |
 | Engine | Phaser 3.90, Vue 3 host |
 | Resolution | 640×360, pixel art, 32×32 tiles, nearest-neighbour scaled to fit |
 | Palette | Cook `#00ffd0` · Server `#ff3b8d` · Diner `#ffd93d` · BG `#120f1a` |
@@ -103,10 +103,20 @@ The Cook can't cross the doorway. They can't take orders, so they read the ticke
 
 Order doesn't matter, but the set has to match exactly. 4 plates exist in total, so busing matters.
 
-## 5. Waves — 8 to save the diner, then Closing Time
+## 5. Waves — 8, 10 or 12 to save the diner, then Closing Time
 
-Hand-authored waves 1–8. The "+15% per wave" from v0.9 now only applies to
-the endless wave 9.
+Hand-authored waves 1–12. Difficulty sets how many of them you play: the run's
+last wave (8 Easy, 10 Medium, 12 Hard) is billed as the FINALE, and clearing it
+saves the diner. The "+15% per wave" from v0.9 only applies to the endless
+Closing Time that follows.
+
+| Difficulty | Waves | Patience | Spawn gap | Tips |
+|---|---|---|---|---|
+| Easy | 8 | ×1.4 | ×1.25 | ×1 |
+| Medium (default) | 10 | ×1 | ×1 | ×1 |
+| Hard | 12 | ×0.9 | ×0.95 | ×1.25 |
+
+Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load as Easy / Medium / Hard.
 
 | # | Name | Customers | Tables | Patience | Spawn every | Recipes | Twist |
 |---|---|---|---|---|---|---|---|
@@ -114,14 +124,19 @@ the endless wave 9.
 | 2 | Lunch Rush | 5 | 3 | 36 s | 12 s | +salad | grandparents and big tippers appear |
 | 3 | First Draft | 6 | 3 | 34 s | 11 s | burger, salad | **Draft before the wave**; kids appear |
 | 4 | Double Booked | 6 | 4 | 32 s | 18 s (pairs) | +deluxe | customers arrive in pairs; rushers appear |
-| 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 12 s | all | burnt food left on the grill catches fire (stays on for waves 5–9) ; **draft before the wave** |
+| 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 12 s | all | burnt food left on the grill catches fire (stays on from here) ; **draft before the wave** |
 | 6 | Dinner Rush | 7 | 5 | 30 s | 12 s | all | — |
 | 7 | VIP Food Critic | 8 | 5 | 28 s | 11 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
-| 8 | Full House | 10 | 6 | 26 s | 16 s (pairs) | all | every table open |
-| 9 | Closing Time | ∞ | 6 | 26 s | 9 s | all | endless; every 4 customers served → spawns and patience 15% harsher. Keep your tips. |
+| 8 | Full House (Easy finale) | 10 | 6 | 26 s | 16 s (pairs) | all | every table open |
+| 9 | Night Owls | 9 | 6 | 26 s | 12 s | all | rusher-heavy crowd ; **draft before the wave** |
+| 10 | Bus Tour (Medium finale) | 9 | 6 | 27 s | 21 s (groups of 3) | all | granny-heavy tour groups: long patience, slow eaters, tables stay busy |
+| 11 | Critics Night | 10 | 6 | 25 s | 11 s | all | 3 critics ; **draft before the wave** |
+| 12 | Midnight Rush (Hard finale) | 12 | 6 | 24 s | 15 s (pairs) | all | 2 critics, extra rushers: everything at once |
+| ∞ | Closing Time | ∞ | 6 | 26 s (or the finale's, if lower) | 9 s | all | endless; every 4 customers served → spawns and patience 15% harsher. Keep your tips. |
 
-- **Clearing wave 8 = the diner is saved (run counts as a win).** Wave 9 is a score chase until lives run out.
-- The draft (before waves 3, 5 and 7) is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
+- **Clearing the finale = the diner is saved (run counts as a win).** Closing Time is a score chase until lives run out.
+- Themed waves (9, 10, 12) add extra weight for one guest type on top of the usual mix, so the crowd feels different.
+- The draft (before waves 3, 5, 7, 9 and 11) is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
 - Every wave starts with a one-line hint on the bottom wall introducing what's new.
 - **Fire (waves 5+):** a burnt patty left on the grill for 3 s bursts into flames. The burning grill is unusable and nothing can be taken off it. While anything burns, **every customer loses patience 1.5× faster**. Fix: take the extinguisher from its red hook and hold X on the grill for 1.2 s.
 - **Shop (after every wave from wave 2):** tips are your score *and* your currency.
@@ -190,7 +205,7 @@ After every 5th wave cleared there's an **Adoption Day**: meet up to three shelt
 - **Streak:** every serve without a walkout adds 5% to tips, up to +50% (Lucky Streak: 10%, up to +100%). Shown as `x1.25` in the HUD; the tip sound climbs in pitch as it grows; milestone pops at 3, 5, 10, 15 and 20. A walkout resets it with a quiet grey "STREAK RESET", not a punishment screen.
 - **Serve quality:** PERFECT (served with ≥70% patience left) = +$2; CLUTCH (saved with <15% left) = +$3. Clutch saves are celebrated on purpose: rescuing a guest at the last second is the best feeling in the genre.
 - **Wave report card:** 3 stars = no walkouts and at least half the serves PERFECT; 2 = no walkouts; 1 = cleared. Star bonus tips = [0, 3, 8, 15][stars] + wave × stars. Stars land one by one with rising notes; 3 stars throws confetti.
-- **Drafts** before waves 3, 5 and 7 (was 3 and 6): a new toy every couple of waves.
+- **Drafts** before waves 3, 5, 7, 9 and 11 (was 3 and 6): a new toy every couple of waves.
 - **Personal bests:** high score table, best streak, stars earned, perfect serves. "NEW BEST STREAK!" only compares against your own past runs.
 
 ## 6d. Ethical fun: how the game uses reward loops
@@ -201,7 +216,7 @@ The game deliberately uses the feel-good parts of reward psychology (clear goals
 - Reward **skill and teamwork**: streaks, PERFECT and CLUTCH, and stars all come from playing well together, never from time spent or money.
 - Give **immediate, honest feedback**: every reward says what earned it (`+$12`, `PERFECT!`, `3 STREAK!`), and every guest trait is labelled.
 - Celebrate **comebacks** (CLUTCH, shop lives) so a bad moment never feels like the end.
-- Let players choose their **challenge**: RELAXED is a first-class mode with the same content, not a penalty. FRANTIC pays a bit more for the extra pressure. Button prompts can be switched off once you've learned the game.
+- Let players choose their **challenge**: EASY is a first-class mode, a shorter night with more breathing room, not a penalty. HARD is a longer night that pays a bit more for the extra pressure. Button prompts can be switched off once you've learned the game.
 - Keep surprises **small and free**: the Big Tipper is a pleasant random moment. It can't be bought, saved up for or chased outside play.
 - Respect **time and attention**: runs are about 18 minutes and end cleanly; the game pauses itself when you look away; nothing happens while you're gone.
 
@@ -214,7 +229,7 @@ The game deliberately uses the feel-good parts of reward psychology (clear goals
 
 ## 6e. Balance audit (soak data)
 
-Bot-vs-bot runs (Sharp bots, Normal difficulty) log every wave: serves, PERFECTs, walkouts and **where each walkout happened** (in the queue, following, waiting to order, or waiting for food).
+Bot-vs-bot runs (Sharp bots, Normal / Medium difficulty unless noted; `?autoplay&diff=EASY|MEDIUM|HARD` picks one) log every wave: serves, PERFECTs, walkouts and **where each walkout happened** (in the queue, following, waiting to order, or waiting for food).
 
 Findings from the v0.6 soaks:
 - Waves 1–4 are clean for the bots (0–1 walkouts), which is right for the onboarding half of a run.
@@ -300,7 +315,7 @@ Godot → Phaser mapping used:
 - [x] Guest variety (grandparents, kids, rushers, big tippers) with visible tags
 - [x] Streaks, PERFECT/CLUTCH serves, wave report card with stars and bonus tips, personal bests
 - [x] Four new power-ups; drafts before waves 3, 5 and 7
-- [x] Difficulty: Relaxed / Normal / Frantic (lobby X, or Settings), recorded with high scores
+- [x] Difficulty: Easy 8 / Medium 10 / Hard 12 waves (lobby X, or Settings), recorded with high scores
 - [x] How to Play page for guests and tips
 
 **Slice 6 — diner pets**
