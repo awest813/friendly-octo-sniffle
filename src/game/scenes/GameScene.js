@@ -275,12 +275,12 @@ export default class GameScene extends Phaser.Scene {
     bus.emit('wave_started', { wave: n, config: cfg })
   }
 
-  // A different loop for the finale, Closing Time and a CALM MUSIC wave;
-  // ordinary waves alternate between two grooves.
+  // A different loop for Closing Time, a CALM MUSIC wave (you paid for it,
+  // even on the finale) and the finale; ordinary waves alternate two grooves.
   musicFor (cfg, n) {
     if (cfg.endless) return 'closing'
-    if (n === RunState.goal) return 'finale'
     if (RunState.calm) return 'calm'
+    if (n === RunState.goal) return 'finale'
     return n % 2 ? 'game' : 'game2'
   }
 

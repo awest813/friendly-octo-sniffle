@@ -26,7 +26,7 @@ export default class PauseOverlay {
     this.mode = 'menu'
     this.dim.setVisible(true)
     this.title.setText('PAUSED').setColor(CSS.diner)
-    const where = RunState.wave > RunState.goal ? 'CLOSING TIME' : `WAVE ${RunState.wave} OF ${RunState.goal}`
+    const where = RunState.wave > RunState.goal ? 'CLOSING TIME' : RunState.wave ? `WAVE ${RunState.wave} OF ${RunState.goal}` : 'GET READY'
     this.body.setY(128).setText(`${RunState.difficulty}  -  ${where}`)
     this.menu = new Menu(this.scene, {
       x: WIDTH / 2,

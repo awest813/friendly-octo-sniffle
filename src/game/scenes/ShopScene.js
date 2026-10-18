@@ -54,9 +54,10 @@ export default class ShopScene extends Phaser.Scene {
       },
       {
         label: 'CALM MUSIC',
-        detail: 'Next wave: customer patience +20%.',
+        // Closing Time never ends, so "next wave only" can't apply to it.
+        detail: next.endless ? 'Not sold for Closing Time.' : 'Next wave: customer patience +20%.',
         price: prices.calm,
-        enabled: () => !RunState.calm && RunState.tips >= prices.calm,
+        enabled: () => !next.endless && !RunState.calm && RunState.tips >= prices.calm,
         action: () => this.buy(prices.calm, () => { RunState.calm = true })
       },
       {

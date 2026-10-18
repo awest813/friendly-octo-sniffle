@@ -11,6 +11,11 @@
   calm music.
 - **New sounds:** a special's "ta-da", PERFECT and CLUTCH stings, a fanfare when the diner is saved
   and a "wah-wah" when the run ends.
+- **Fixes from a code audit:** the AI cook could loop picking up and putting back a finished dish
+  when every pass was full (letting a patty burn); CALM MUSIC bought before the finale now plays the
+  calm track, and it isn't sold before Closing Time, where "next wave only" never ran out; pausing
+  in the first moment of a run says GET READY instead of WAVE 0.
+- How to Play explains Tonight's Specials.
 
 ## 0.10.1
 

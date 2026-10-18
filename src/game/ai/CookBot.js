@@ -59,8 +59,10 @@ export default class CookBot extends Bot {
     return this.openOrders().some(o => o.recipe === dish)
   }
 
+  // Put something down out of the way: the spare counter first, so the
+  // assembly counters stay free for building plates.
   stash (S) {
-    const free = S.counters.find(c => !c.item)
+    const free = S.counters.find(c => !c.item && !c.assembly) || S.counters.find(c => !c.item)
     return free ? this.tap(free) : this.tap(S.bin)
   }
 
@@ -109,14 +111,20 @@ export default class CookBot extends Bot {
 
     const order = this.currentOrder()
     const recipe = order && RECIPES[order.recipe]
-    const plateSt = S.assembly.find(a => isCleanPlate(a.item))
+    // A finished dish for another ticket, parked on an assembly counter while
+    // the pass was full, isn't the plate we're building: leave it be.
+    const parked = a => {
+      const dish = plateDish(a.item)
+      return !!dish && dish !== (order && order.recipe) && this.finished(a.item.contents, dish, order && order.recipe)
+    }
+    const plateSt = S.assembly.find(a => isCleanPlate(a.item) && !parked(a)) || null
     if (held) return this.placeHeld(held, S, plateSt, order)
 
     const burnt = S.grills.find(g => g.item && g.item.state === 'burnt')
     if (burnt) return this.tap(burnt)
 
     // A finished dish stashed while the pass was full goes out as soon as it can.
-    const stashedDish = S.counters.find(c => !c.assembly && plateDish(c.item))
+    const stashedDish = S.counters.find(c => c !== plateSt && plateDish(c.item) && (!c.assembly || parked(c)))
     if (stashedDish && S.passes.some(p => !p.item)) return this.tap(stashedDish)
 
     if (plateSt) {
