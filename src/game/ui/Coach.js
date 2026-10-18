@@ -1,6 +1,6 @@
 // First-waves coaching: a bouncing arrow over the next useful thing to do.
-// The advice comes from the bot planners (CookBot / ServerBot), run in
-// "advisor" mode for the human's player, so it always fits the situation.
+// The advice comes from the bot planners (CookBot / ServerBot), asked what
+// they'd do next in the human's place, so it always fits the situation.
 const THINK_EVERY = 0.35
 
 export default class Coach {
@@ -8,7 +8,6 @@ export default class Coach {
     this.scene = scene
     this.player = player
     this.brain = brain
-    this.brain.advisor = true
     this.timer = 0
     this.target = null
     this.arrow = scene.add.image(0, 0, 'arrow').setScale(1.5).setTint(player.color).setDepth(9650).setVisible(false)
