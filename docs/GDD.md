@@ -145,10 +145,29 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
   |---|---|---|
   | +1 Life | $30 | Back up to the 3-life cap |
   | +1 Plate | $12 | Up to 7 plates total |
-  | Calm Music | $20 | Next wave only: patience +20% |
+  | Calm Music | $20 | Next wave only: patience +20%, and a slower, softer music loop |
   | Draft reroll | $15 | In the draft (Y): three new options |
 
   Bigger Tips raises all prices by 20%.
+
+### Tonight's Specials (run-to-run variety)
+
+From wave 3, every ordinary wave has a 50% chance of a random twist, rolled before the shop so the
+shop can preview it ("NEXT: DINNER RUSH + HAPPY HOUR"). Specials never land on waves 1–2, the
+themed waves (9, 10, 12), the finale or Closing Time, and never twice in a row, so the hand-tuned
+curve stays intact. When the doors open the special is stamped across the dining room, and the
+bottom hint line alternates between the wave's tip and the special.
+
+| Special | Effect | From |
+|---|---|---|
+| Happy Hour | tips ×1.5, guests arrive 15% faster | 3 |
+| Burger Night | burgers weighted ×5 on the order mix, +1 guest | 3 |
+| Salad Bar | salads ×5, tips ×1.1 | 3 |
+| Deluxe Day | deluxes ×4, tips ×1.3 | 5 |
+| Early Birds | +5 granny weight (chill, slow eaters) | 3 |
+| School Trip | +5 kid weight (burgers only, impatient) | 4 |
+| Quiet Night | −1 guest, patience ×1.15 (a breather) | 3 |
+| Big Spenders | Big Tippers ×3 as often | 3 |
 
 ## 6. Power-ups (draft pool)
 
@@ -306,7 +325,9 @@ Godot → Phaser mapping used:
 **Slice 4 — ready for players**
 - [x] Title screen, main menu, How to Play, Settings, High Scores, attract demo
 - [x] AI teammate skill levels, picked in the lobby or in Settings
-- [x] Procedural music (menu and in-game), ducked while paused
+- [x] Procedural music, ducked while paused: menu, two alternating gameplay grooves, a finale track, Closing Time, and a calm loop for a Calm Music wave. Each loop alternates two lead phrases.
+- [x] Jingles for a special, PERFECT / CLUTCH serves, saving the diner, and the run ending
+- [x] Tonight's Specials: random wave twists from wave 3
 - [x] Launcher: loading screen, load-failure and crash screens, fullscreen button (F), touch-device notice, favicon and page metadata
 - [x] Auto-pause on window blur; inputs ignore buttons still held from the previous screen
 - [x] GitHub Pages workflow (build on PR, deploy master); relative asset paths

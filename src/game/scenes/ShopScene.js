@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, FONT, CSS, TUNING, SHOP } from '@/game/constants'
 import { waveFor } from '@/game/data/waves'
+import { SPECIAL_BY_ID } from '@/game/data/specials'
 import PlayerInput from '@/game/input/PlayerInput'
 import Menu from '@/game/ui/Menu'
 import RunState from '@/game/state/RunState'
@@ -60,7 +61,8 @@ export default class ShopScene extends Phaser.Scene {
       },
       {
         label: 'OPEN THE DOORS',
-        detail: RunState.wave + 1 === RunState.goal ? `NEXT: ${next.name} - THE FINALE` : `NEXT: ${next.name}`,
+        detail: RunState.wave + 1 === RunState.goal ? `NEXT: ${next.name} - THE FINALE`
+          : RunState.nextSpecial ? `NEXT: ${next.name} + ${SPECIAL_BY_ID[RunState.nextSpecial].name}` : `NEXT: ${next.name}`,
         action: () => this.finish()
       }
     ]

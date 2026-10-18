@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { WIDTH, HEIGHT, TILE, MAP_TOP, COLORS, TUNING, FONT } from '@/game/constants'
 import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL } from '@/game/data/map'
 import { waveFor, CRITIC } from '@/game/data/waves'
+import { rollSpecial, withSpecial, pickOrder } from '@/game/data/specials'
 import { GUESTS, rollGuest } from '@/game/data/guests'
 import { PET_BY_ID, ADOPT_EVERY, ENDLESS_ADOPT_SERVED } from '@/game/data/pets'
 import Pet from '@/game/entities/Pet'
@@ -22,11 +23,11 @@ import BotInput from '@/game/ai/BotInput'
 import Settings from '@/game/state/settings'
 import CookBot from '@/game/ai/CookBot'
 import ServerBot from '@/game/ai/ServerBot'
-import { floatText, shake, banner } from '@/game/ui/fx'
+import { floatText, shake, banner, stamp } from '@/game/ui/fx'
 import RunState from '@/game/state/RunState'
 import bus from '@/game/state/bus'
 import { initSfx, sfx } from '@/game/audio/sfx'
-import { playMusic, duckMusic, setMusicIntensity } from '@/game/audio/music'
+import { playMusic, stopMusic, duckMusic, setMusicIntensity } from '@/game/audio/music'
 import AnyInput from '@/game/input/AnyInput'
 
 const CRATES = { B: 'bun', P: 'patty', L: 'lettuce', M: 'tomato' }
@@ -227,7 +228,9 @@ export default class GameScene extends Phaser.Scene {
 
   nextWave () {
     RunState.wave++
-    const cfg = this.waveConfig(RunState.wave)
+    const cfg = withSpecial(this.waveConfig(RunState.wave), RunState.nextSpecial)
+    RunState.lastSpecial = RunState.nextSpecial
+    RunState.nextSpecial = null
     if (cfg.draft) {
       this.scene.launch('DraftScene', {
         onPick: () => {
@@ -256,12 +259,29 @@ export default class GameScene extends Phaser.Scene {
     this.spawnTimer = this.prepLeft + 0.5
     this.lastCalled = false
     this.chain = null
+    playMusic(this.musicFor(cfg, n))
     setMusicIntensity(1)
     this.waveActive = true
     this.tables.forEach((t, i) => t.setOpen(t.open || i < cfg.tables))
     banner(this, cfg.endless ? 'CLOSING TIME' : `WAVE ${n}`, `${cfg.name} - ${n === RunState.goal ? 'FINALE' : cfg.tag}`)
     sfx('wave')
+    if (cfg.special) {
+      this.time.delayedCall(2300, () => {
+        if (this.over) return
+        stamp(this, 432, MAP_TOP + 130, `TONIGHT: ${cfg.special.name}!`, cfg.special.color, 2000)
+        sfx('special')
+      })
+    }
     bus.emit('wave_started', { wave: n, config: cfg })
+  }
+
+  // A different loop for the finale, Closing Time and a CALM MUSIC wave;
+  // ordinary waves alternate between two grooves.
+  musicFor (cfg, n) {
+    if (cfg.endless) return 'closing'
+    if (n === RunState.goal) return 'finale'
+    if (RunState.calm) return 'calm'
+    return n % 2 ? 'game' : 'game2'
   }
 
   get difficulty () {
@@ -296,13 +316,13 @@ export default class GameScene extends Phaser.Scene {
     const critic = this.criticsLeft > 0 && Math.random() < this.criticsLeft / remaining
     if (critic) this.criticsLeft--
     const variants = this.registry.get('customerVariants')
-    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave, this.hasPet('pepper') ? 2 : 1, cfg.mix)
+    const guest = critic ? GUESTS.critic : rollGuest(RunState.wave, (this.hasPet('pepper') ? 2 : 1) * (cfg.luck || 1), cfg.mix)
     const menu = guest.orders ? cfg.recipes.filter(r => guest.orders.includes(r)) : cfg.recipes
     const c = new Customer(this, {
       x: this.entrance.x + TILE + offset * 18,
       y: this.entrance.y,
       texture: `customer${Phaser.Math.Between(0, variants - 1)}`,
-      order: Phaser.Utils.Array.GetRandom(menu.length ? menu : cfg.recipes),
+      order: pickOrder(menu.length ? menu : cfg.recipes, cfg.menu),
       patience: (critic ? CRITIC.patience : cfg.patience * guest.patience) / this.difficulty,
       guest
     })
@@ -340,10 +360,10 @@ export default class GameScene extends Phaser.Scene {
     RunState.wavesCleared = n
     RunState.calm = false
     if (this.registry.get('autoplay')) {
-      console.info('[duo] wave cleared', n, JSON.stringify({ served: RunState.served, angry: RunState.angry, lives: RunState.lives, tips: RunState.tips, wave: this.waveStats, streak: RunState.streak, mods: [...RunState.modifiers], pets: RunState.pets }))
+      console.info('[duo] wave cleared', n, JSON.stringify({ served: RunState.served, angry: RunState.angry, lives: RunState.lives, tips: RunState.tips, wave: this.waveStats, special: this.waveCfg.special ? this.waveCfg.special.id : null, streak: RunState.streak, mods: [...RunState.modifiers], pets: RunState.pets }))
     }
     bus.emit('wave_cleared', { wave: n })
-    sfx('wave')
+    sfx(n === RunState.goal ? 'win' : 'wave')
     setMusicIntensity(1)
     const { stars, bonus } = this.rateWave(n)
     RunState.tips += bonus
@@ -373,6 +393,8 @@ export default class GameScene extends Phaser.Scene {
   // Between waves: shop (from wave 2), Adoption Day (every 5th wave), then
   // nextWave() handles any draft.
   betweenWaves () {
+    const n = RunState.wave + 1
+    RunState.nextSpecial = rollSpecial(n, RunState.goal, this.waveConfig(n), RunState.lastSpecial)
     const steps = []
     if (RunState.wave >= 2) steps.push('ShopScene')
     if (RunState.wave % ADOPT_EVERY === 0) steps.push('AdoptScene')
@@ -550,7 +572,7 @@ export default class GameScene extends Phaser.Scene {
     const octo = both ? TUNING.octoBonus : 0
     const chef = served.quality || 0
     const bonus = (quality === 'PERFECT' ? TUNING.perfectBonus : quality === 'CLUTCH' ? TUNING.clutchBonus : 0) + chef * TUNING.chefBonus
-    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * c.guest.tip * RunState.streakMult() * this.petTip(c)) + octo + bonus
+    const tip = Math.round((TUNING.baseTip + speed) * RunState.tipMult() * c.guest.tip * RunState.streakMult() * this.petTip(c) * (this.waveCfg.tips || 1)) + octo + bonus
     RunState.tips += tip
     RunState.served++
     if (quality === 'PERFECT') RunState.perfect++
@@ -563,6 +585,7 @@ export default class GameScene extends Phaser.Scene {
     floatText(this, c.pos.x, c.pos.y - 40, octo ? `+$${tip} OCTO!` : `+$${tip}`)
     this.coinBurst(c.pos.x, c.pos.y - 30, Math.min(6, Math.ceil(tip / 4)))
     if (quality) {
+      this.time.delayedCall(220, () => sfx(quality === 'PERFECT' ? 'perfect' : 'clutch'))
       this.time.delayedCall(220, () => floatText(this, c.pos.x, c.pos.y - 52, `${quality}!`, quality === 'PERFECT' ? '#00ffd0' : '#ff3b8d'))
     }
     if (chef) {
@@ -736,6 +759,8 @@ export default class GameScene extends Phaser.Scene {
     const won = RunState.wavesCleared >= RunState.goal
     bus.emit('run_over', { won })
     this.players.forEach(p => p.body.setVelocity(0, 0))
+    stopMusic()
+    sfx(won ? 'win' : 'lose')
     banner(this, won ? 'LAST CALL!' : 'RUN OVER', won ? 'THE DINER CLOSES' : 'TOO MANY ANGRY CUSTOMERS', won ? '#ffd93d' : '#ff4040', 1800)
     this.time.delayedCall(2200, () => {
       if (this.demo) this.scene.start('TitleScene', { skipSplash: true })
@@ -824,6 +849,10 @@ export default class GameScene extends Phaser.Scene {
     if (fires) {
       const blink = Math.floor(this.time.now / 300) % 2 === 0
       this.setHint('FIRE! GRAB THE RED EXTINGUISHER AND HOLD X ON THE GRILL', blink ? '#ff4040' : '#ffd93d')
+    } else if (this.waveCfg && this.waveCfg.special && Math.floor(this.time.now / 5000) % 2 === 1) {
+      // A special shares the hint line with the wave's own tip.
+      const sp = this.waveCfg.special
+      this.setHint(`TONIGHT'S SPECIAL - ${sp.name}: ${sp.desc}`, sp.color)
     } else {
       this.setHint((this.waveCfg && this.waveCfg.hint) || '', '#8a8399')
     }

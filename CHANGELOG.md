@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.0
+
+- **Tonight's Specials:** from wave 3, about half the waves get a random twist: Happy Hour, Burger
+  Night, Salad Bar, Deluxe Day, Early Birds, School Trip, Quiet Night or Big Spenders. The shop
+  previews the next one, it's stamped across the room when the doors open, and the hint line
+  explains it. Never on the finale or themed waves, never twice in a row.
+- **Music variety:** two gameplay grooves alternate by wave, the finale and Closing Time have their
+  own tracks, and every loop alternates two melodies. CALM MUSIC from the shop now actually plays
+  calm music.
+- **New sounds:** a special's "ta-da", PERFECT and CLUTCH stings, a fanfare when the diner is saved
+  and a "wah-wah" when the run ends.
+
 ## 0.10.1
 
 - **Power-up rarity is real now:** drafts are weighted Common 5 : Rare 3 : Epic 2 (about 1 draft in

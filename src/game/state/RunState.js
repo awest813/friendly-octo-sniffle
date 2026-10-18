@@ -20,6 +20,9 @@ const RunState = {
     this.pets = []
     this.livesBought = 0
     this.petted = 0
+    // Tonight's Special: rolled before the shop so it can be previewed there.
+    this.nextSpecial = null
+    this.lastSpecial = null
     // Locked in for the whole run so it can't be changed mid-way.
     this.difficulty = DIFFICULTIES[Settings.difficulty] ? Settings.difficulty : 'MEDIUM'
   },

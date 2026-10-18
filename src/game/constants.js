@@ -4,7 +4,7 @@ export const TILE = 32
 export const MAP_TOP = 40
 
 export const FONT = '"Press Start 2P", monospace'
-export const VERSION = '0.10.1'
+export const VERSION = '0.11.0'
 
 export const COLORS = {
   bg: 0x120f1a,

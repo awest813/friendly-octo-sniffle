@@ -22,6 +22,16 @@ export function shake (scene, strength = 0.006, duration = 160) {
   scene.cameras.main.shake(duration, strength)
 }
 
+// A big announcement that pops in, holds, then fades (Tonight's Special).
+export function stamp (scene, x, y, text, color = '#ffd93d', hold = 1600) {
+  const t = scene.add.text(x, y, text, {
+    fontFamily: FONT, fontSize: '16px', color, stroke: '#1a1423', strokeThickness: 4
+  }).setOrigin(0.5).setDepth(9500).setAngle(-4)
+  scene.tweens.add({ targets: t, scale: { from: 2.2, to: 1 }, alpha: { from: 0, to: 1 }, duration: 260, ease: 'Back.easeOut' })
+  scene.tweens.add({ targets: t, alpha: 0, y: y - 14, delay: hold, duration: 400, onComplete: () => t.destroy() })
+  return t
+}
+
 export function banner (scene, title, subtitle, color = '#00ffd0', hold = 1800) {
   const { width, height } = scene.scale
   const bg = scene.add.rectangle(width / 2, height / 2, width, 64, 0x120f1a, 0.92).setDepth(9800)
