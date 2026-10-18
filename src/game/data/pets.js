@@ -14,7 +14,7 @@ export const PETS = [
   },
   {
     id: 'beans', kind: 'DOG', name: 'BEANS', breed: 'BEAGLE', texture: 'pet_beans',
-    desc: 'Greets the queue: waiting guests lose patience 50% slower.', home: 'door', color: 0xc08040
+    desc: 'Greets the queue: guests in line lose patience 50% slower.', home: 'door', color: 0xc08040
   },
   {
     id: 'mochi', kind: 'CAT', name: 'MOCHI', breed: 'TABBY', texture: 'pet_mochi',

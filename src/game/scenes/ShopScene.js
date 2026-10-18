@@ -60,7 +60,7 @@ export default class ShopScene extends Phaser.Scene {
       },
       {
         label: 'OPEN THE DOORS',
-        detail: `NEXT: ${next.name}`,
+        detail: RunState.wave + 1 === RunState.goal ? `NEXT: ${next.name} - THE FINALE` : `NEXT: ${next.name}`,
         action: () => this.finish()
       }
     ]

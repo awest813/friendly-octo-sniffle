@@ -8,6 +8,7 @@ import { sfx } from '@/game/audio/sfx'
 
 const CAT_COLOR = { COOK: COLORS.cook, SERVER: COLORS.server, DINER: COLORS.diner }
 const CAT_CSS = { COOK: CSS.cook, SERVER: CSS.server, DINER: CSS.diner }
+const RARITY_CSS = { COMMON: CSS.dim, RARE: '#69b4ea', EPIC: '#c58cff' }
 const CARD_W = 168
 const CARD_H = 180
 
@@ -52,7 +53,7 @@ export default class DraftScene extends Phaser.Scene {
       const c = this.add.container(x, 196)
       const bg = this.add.rectangle(0, 0, CARD_W, CARD_H, COLORS.panel).setStrokeStyle(2, COLORS.panelEdge)
       const cat = this.add.text(-CARD_W / 2 + 8, -CARD_H / 2 + 8, pu.cat, { fontFamily: FONT, fontSize: '8px', color: CAT_CSS[pu.cat] })
-      const rarity = this.add.text(CARD_W / 2 - 8, -CARD_H / 2 + 8, pu.rarity, { fontFamily: FONT, fontSize: '8px', color: CSS.dim }).setOrigin(1, 0)
+      const rarity = this.add.text(CARD_W / 2 - 8, -CARD_H / 2 + 8, pu.rarity, { fontFamily: FONT, fontSize: '8px', color: RARITY_CSS[pu.rarity] }).setOrigin(1, 0)
       const icon = this.add.image(0, -32, pu.icon).setScale(3)
       const name = this.add.text(0, 14, pu.name, {
         fontFamily: FONT, fontSize: '8px', color: CSS.white, align: 'center', wordWrap: { width: CARD_W - 16 }

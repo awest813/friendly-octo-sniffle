@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.1
+
+- **Power-up rarity is real now:** drafts are weighted Common 5 : Rare 3 : Epic 2 (about 1 draft in
+  4 shows an Epic), and the rarity label is colour-coded. Before, every card was equally likely.
+- Streak call-outs keep coming on long runs: 3, 5, 10, 15, 20, then every 10.
+- The shop warns when the next wave is the finale.
+- Beans' card says what it does: guests *in line* lose patience slower.
+
 ## 0.10.0
 
 - **Difficulty is now run length:** Easy saves the diner after 8 waves, Medium after 10 and Hard

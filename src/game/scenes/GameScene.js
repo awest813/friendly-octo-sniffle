@@ -569,7 +569,9 @@ export default class GameScene extends Phaser.Scene {
       this.time.delayedCall(660, () => floatText(this, c.pos.x, c.pos.y - 76, `CHEF'S KISS +$${chef * TUNING.chefBonus}`, '#ffd93d'))
     }
     this.chainAction('serve', c.pos.x, c.pos.y - 12)
-    if ([3, 5, 10, 15, 20].includes(RunState.streak)) {
+    // Milestones keep coming on long runs: 3, 5, 10, 15, 20, then every 10.
+    const s = RunState.streak
+    if ([3, 5, 10, 15].includes(s) || (s >= 20 && s % 10 === 0)) {
       this.time.delayedCall(440, () => floatText(this, c.pos.x, c.pos.y - 64, `${RunState.streak} STREAK!`, '#f79a3e'))
     }
     this.hud.bumpTips()

@@ -136,7 +136,7 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
 
 - **Clearing the finale = the diner is saved (run counts as a win).** Closing Time is a score chase until lives run out.
 - Themed waves (9, 10, 12) add extra weight for one guest type on top of the usual mix, so the crowd feels different.
-- The draft (before waves 3, 5, 7, 9 and 11) is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
+- The draft (before waves 3, 5, 7, 9 and 11) is a **pick 1 of 3** from the power-up pool, without duplicates, weighted by rarity (Common 5 : Rare 3 : Epic 2, so about 1 draft in 4 shows an Epic). Rarity is colour-coded on the card. Either player can move the cursor and confirm.
 - Every wave starts with a one-line hint on the bottom wall introducing what's new.
 - **Fire (waves 5+):** a burnt patty left on the grill for 3 s bursts into flames. The burning grill is unusable and nothing can be taken off it. While anything burns, **every customer loses patience 1.5× faster**. Fix: take the extinguisher from its red hook and hold X on the grill for 1.2 s.
 - **Shop (after every wave from wave 2):** tips are your score *and* your currency.

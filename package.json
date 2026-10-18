@@ -1,6 +1,6 @@
 {
   "name": "duo-diner",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Two-player couch co-op diner roguelike (Phaser 3 + Vue 3)",
   "scripts": {
     "serve": "vue-cli-service serve",
