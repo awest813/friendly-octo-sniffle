@@ -1,14 +1,14 @@
 {
-  "name": "vue-phaser3",
-  "version": "3.2.1",
-  "description": "Template for working with Phaser in a Vue project",
-  "author": "Markus Appel <markospoparkos@gmail.com>",
+  "name": "duo-diner",
+  "version": "0.10.0",
+  "description": "Two-player couch co-op diner roguelike (Phaser 3 + Vue 3)",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "start": "http-server dist --port=5000"
   },
   "dependencies": {
+    "@fontsource/press-start-2p": "^5.3.0",
     "core-js": "^3.48.0",
     "phaser": "^3.90.0",
     "vue": "^3.5.27"
@@ -21,15 +21,11 @@
     "sass-loader": "^16.0.6"
   },
   "keywords": [
-    "vue",
     "phaser",
-    "webpack",
-    "boilerplate",
-    "template"
+    "vue",
+    "game",
+    "co-op",
+    "roguelike"
   ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Sun0fABeach/vue-phaser3.git"
-  }
+  "license": "MIT"
 }

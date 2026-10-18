@@ -1,0 +1,729 @@
+import { TILE, MAP_TOP, TUNING, FONT } from '@/game/constants'
+import { INGREDIENTS, canAddToPlate } from '@/game/data/recipes'
+import {
+  ItemView, ingredient, plate, tool, combine, addToPlate, isCleanPlate, isDirtyPlate, isTool, isServable,
+  isPlateReady, plateDish
+} from '@/game/entities/items'
+import RunState from '@/game/state/RunState'
+import { sfx } from '@/game/audio/sfx'
+import { floatText } from '@/game/ui/fx'
+
+// Would combine() succeed? Same rules, no mutation (for button prompts).
+function canCombine (held, here) {
+  return (isCleanPlate(held) && isPlateReady(here) && canAddToPlate(held.contents, here.id)) ||
+    (isCleanPlate(here) && isPlateReady(held) && canAddToPlate(here.contents, held.id))
+}
+
+const NAMES = { bun: 'BUN', patty: 'PATTY', lettuce: 'LETTUCE', tomato: 'TOMATO' }
+
+export function tileCenter (tx, ty) {
+  return { x: tx * TILE + TILE / 2, y: MAP_TOP + ty * TILE + TILE / 2 }
+}
+
+export class Station {
+  constructor (scene, tx, ty, texture) {
+    this.scene = scene
+    this.tx = tx
+    this.ty = ty
+    const c = tileCenter(tx, ty)
+    this.x = c.x
+    this.y = c.y
+    this.anchors = [c]
+    this.sprite = scene.add.image(c.x, c.y, texture).setDepth(c.y + 8)
+    this.item = null
+    this.itemView = new ItemView(scene, c.x, c.y - 6).setDepth(c.y + 9)
+    this.bar = scene.add.graphics().setDepth(8500)
+    scene.addSolid(c.x, c.y)
+  }
+
+  highlightAt () {
+    return { x: this.x, y: this.y }
+  }
+
+  reachableBy () {
+    return true
+  }
+
+  setItem (item) {
+    this.item = item
+    this.itemView.setItem(item)
+  }
+
+  refreshItem () {
+    this.itemView.refresh()
+  }
+
+  accepts () {
+    return true
+  }
+
+  onPlaced () {}
+  onTaken () {}
+
+  // Shared pick up / put down / combine-onto-plate rules for any slot.
+  interact (player) {
+    const held = player.item
+    const here = this.item
+    if (!held && here) {
+      player.setItem(here)
+      this.setItem(null)
+      this.onTaken()
+      sfx('pickup')
+      return true
+    }
+    if (held && !here) {
+      if (!this.accepts(held)) return false
+      this.setItem(held)
+      player.setItem(null)
+      this.onPlaced()
+      sfx('drop')
+      return true
+    }
+    if (held && here) {
+      const keeper = combine(held, here)
+      if (keeper === 'player') {
+        this.setItem(null)
+        this.onTaken()
+        player.refreshItem()
+        sfx('pickup')
+        return true
+      }
+      if (keeper === 'slot') {
+        player.setItem(null)
+        this.refreshItem()
+        sfx('drop')
+        return true
+      }
+      if (player.canStack(here)) {
+        player.stack(here)
+        this.setItem(null)
+        this.onTaken()
+        sfx('pickup')
+        return true
+      }
+    }
+    return false
+  }
+
+  // What pressing a button here would do right now. {A}/{X} become the
+  // player's own button names. null = nothing useful to do.
+  prompt (player) {
+    const held = player.item
+    const here = this.item
+    if (!held && here) return '{A} PICK UP'
+    if (held && !here) {
+      if (!this.accepts(held)) return null
+      return this.isPass && isDirtyPlate(held) ? '{A} SEND TO KITCHEN' : '{A} PUT DOWN'
+    }
+    if (held && here) {
+      if (canCombine(held, here)) return '{A} ADD TO PLATE'
+      if (player.canStack(here)) return '{A} STACK PLATE'
+    }
+    return null
+  }
+
+  // An item arriving without a player (Ingredient Cannon). Same rules as
+  // putting it down by hand.
+  receive (item) {
+    if (!this.item) {
+      if (!this.accepts(item)) return false
+      this.setItem(item)
+      this.onPlaced()
+      return true
+    }
+    if (isCleanPlate(this.item) && addToPlate(this.item, item)) {
+      this.refreshItem()
+      return true
+    }
+    return false
+  }
+
+  use () {
+    return false
+  }
+
+  update () {}
+
+  drawBar (ratio, color, yOff = 14) {
+    this.bar.clear()
+    if (ratio === null) return
+    const w = 24
+    this.bar.fillStyle(0x1a1423, 1).fillRect(this.x - w / 2 - 1, this.y + yOff - 1, w + 2, 5)
+    this.bar.fillStyle(color, 1).fillRect(this.x - w / 2, this.y + yOff, Math.max(1, w * ratio), 3)
+  }
+
+  destroy () {
+    this.sprite.destroy()
+    this.itemView.destroy()
+    this.bar.destroy()
+  }
+}
+
+export class Counter extends Station {
+  constructor (scene, tx, ty, texture = 'counter') {
+    super(scene, tx, ty, texture)
+  }
+}
+
+// Where the extinguisher lives. Acts like a counter otherwise.
+export class Hook extends Station {
+  constructor (scene, tx, ty) {
+    super(scene, tx, ty, 'hook')
+    this.setItem(tool('extinguisher'))
+  }
+
+  prompt (player) {
+    if (!player.item && isTool(this.item, 'extinguisher')) return '{A} TAKE EXTINGUISHER'
+    if (isTool(player.item, 'extinguisher') && !this.item) return '{A} HANG IT BACK'
+    return super.prompt(player)
+  }
+}
+
+// Hold X to chop at a steady pace. Or play the rhythm game: tap X as the
+// marker crosses the green zone for big chop jumps; two good taps make a
+// PERFECT CHOP (a quality bonus on the finished dish).
+export class Board extends Station {
+  constructor (scene, tx, ty) {
+    super(scene, tx, ty, 'board')
+    this.progress = 0
+    this.chopSound = 0
+    this.nice = 0
+    this.rhythm = scene.add.graphics().setDepth(8600)
+    this.hint = scene.add.text(this.x, this.y - 22, 'X', {
+      fontFamily: FONT, fontSize: '8px', color: '#1a1423', backgroundColor: '#00ffd0', padding: { x: 2, y: 1 }
+    }).setOrigin(0.5).setDepth(8600).setVisible(false)
+  }
+
+  get choppable () {
+    const it = this.item
+    return !!it && it.type === 'ing' && INGREDIENTS[it.id].chop && it.state === 'raw'
+  }
+
+  // Marker position 0..1, sweeping left to right.
+  get marker () {
+    return (this.scene.time.now / 1000 / TUNING.rhythmPeriod) % 1
+  }
+
+  get inZone () {
+    const m = this.marker
+    return m > 0.68 && m < 0.68 + TUNING.rhythmZone
+  }
+
+  onPlaced () {
+    this.progress = 0
+    this.nice = 0
+    if (this.choppable && RunState.has('chopper')) this.finishChop()
+  }
+
+  onTaken () {
+    this.progress = 0
+    this.nice = 0
+  }
+
+  finishChop () {
+    this.item.state = 'chopped'
+    if (this.nice >= TUNING.perfectChopTaps) {
+      this.item.perfect = true
+      floatText(this.scene, this.x, this.y - 30, 'PERFECT CHOP!', '#00ffd0')
+      sfx('star', 1)
+    }
+    this.refreshItem()
+    this.progress = 0
+    this.nice = 0
+    sfx('chopDone')
+  }
+
+  prompt (player) {
+    if (!player.item && this.choppable) return '{X} CHOP (TAP ON GREEN!)'
+    return super.prompt(player)
+  }
+
+  use (player, dt) {
+    if (player.item || !this.choppable) return false
+    this.progress += dt
+    if (player.input.pressed('use') && this.inZone) {
+      this.progress += TUNING.rhythmBoost * TUNING.chopTime
+      this.nice++
+      floatText(this.scene, this.x + 10, this.y - 26, 'NICE!', '#7ed957')
+      sfx('select')
+    }
+    this.chopSound -= dt
+    if (this.chopSound <= 0) {
+      sfx('chop')
+      this.chopSound = 0.18
+      this.scene.tweens.add({ targets: this.itemView, y: this.y - 8, duration: 50, yoyo: true })
+    }
+    if (this.progress >= TUNING.chopTime) this.finishChop()
+    return true
+  }
+
+  update () {
+    this.hint.setVisible(false)
+    this.drawBar(this.progress > 0 ? this.progress / TUNING.chopTime : null, 0x00ffd0)
+    // Show the rhythm track while a human is lined up to chop.
+    const human = this.scene.players.some(p => p.target === this && p.input.keys && !p.item)
+    this.rhythm.clear()
+    if (!human || !this.choppable) return
+    const w = 30
+    const x0 = this.x - w / 2
+    // Below the board, clear of the button prompt above it.
+    const y = this.y + 21
+    this.rhythm.fillStyle(0x1a1423, 1).fillRect(x0 - 1, y - 1, w + 2, 6)
+    this.rhythm.fillStyle(0x3a3150, 1).fillRect(x0, y, w, 4)
+    this.rhythm.fillStyle(0x7ed957, 1).fillRect(x0 + w * 0.68, y, w * TUNING.rhythmZone, 4)
+    this.rhythm.fillStyle(0xffffff, 1).fillRect(x0 + w * this.marker - 1, y - 2, 2, 8)
+  }
+
+  destroy () {
+    super.destroy()
+    this.rhythm.destroy()
+    this.hint.destroy()
+  }
+}
+
+export class Grill extends Station {
+  constructor (scene, tx, ty) {
+    super(scene, tx, ty, 'grill')
+    this.timer = 0
+    this.sizzle = 0
+    this.fireTimer = 0
+    this.onFire = false
+    this.spray = 0
+    this.sprayed = false
+    this.smoke = scene.add.particles(this.x, this.y - 8, 'smoke', {
+      speedY: { min: -30, max: -15 }, speedX: { min: -8, max: 8 },
+      lifespan: 900, alpha: { start: 0.6, end: 0 }, scale: { start: 1, end: 2 }, tint: 0x9a9aaa,
+      emitting: false
+    }).setDepth(8400)
+    this.flames = scene.add.particles(this.x, this.y - 4, 'flame', {
+      x: { min: -10, max: 10 }, speedY: { min: -60, max: -25 }, speedX: { min: -10, max: 10 },
+      lifespan: 520, scale: { start: 2.2, end: 0.4 }, tint: [0xffd93d, 0xf79a3e, 0xe8402f],
+      frequency: 30, emitting: false
+    }).setDepth(8450)
+    this.foam = scene.add.particles(this.x, this.y - 6, 'smoke', {
+      x: { min: -12, max: 12 }, speed: { min: 10, max: 40 }, lifespan: 450,
+      alpha: { start: 0.9, end: 0 }, scale: { start: 1.5, end: 2.5 }, emitting: false
+    }).setDepth(8460)
+    this.hint = scene.add.text(this.x, this.y - 22, 'X', {
+      fontFamily: FONT, fontSize: '8px', color: '#1a1423', backgroundColor: '#ff4040', padding: { x: 2, y: 1 }
+    }).setOrigin(0.5).setDepth(8600).setVisible(false)
+  }
+
+  accepts (item) {
+    return !this.onFire && item.type === 'ing' && item.id === 'patty' && item.state !== 'burnt'
+  }
+
+  // The golden window just after a patty cooks: take it now for a perfect sear.
+  get searing () {
+    const it = this.item
+    return !!it && it.id === 'patty' && it.state === 'cooked' &&
+      this.timer - TUNING.grillCookTime <= TUNING.searWindow
+  }
+
+  interact (player) {
+    if (this.onFire) return false
+    const perfect = this.searing
+    if (perfect) this.item.perfect = true
+    const before = this.item
+    const ok = super.interact(player)
+    if (perfect && (!ok || this.item === before)) delete before.perfect
+    else if (perfect) {
+      floatText(this.scene, this.x, this.y - 30, 'PERFECT SEAR!', '#ffd93d')
+      sfx('star', 2)
+    }
+    return ok
+  }
+
+  receive (item) {
+    if (this.onFire) return false
+    return super.receive(item)
+  }
+
+  onPlaced () {
+    // A patty that arrives already cooked starts past the golden window:
+    // perfect sears only come from cooking it here.
+    this.timer = this.item.state === 'cooked' ? TUNING.grillCookTime + TUNING.searWindow + 0.01 : 0
+    sfx('sizzle')
+  }
+
+  onTaken () {
+    this.timer = 0
+    this.fireTimer = 0
+  }
+
+  prompt (player) {
+    const held = player.item
+    if (this.onFire) return isTool(held, 'extinguisher') ? '{X} HOLD TO SPRAY' : 'FIRE! GET THE EXTINGUISHER'
+    if (held && !this.item && this.accepts(held)) return '{A} GRILL IT'
+    if (!held && this.item && this.item.state === 'raw') return 'COOKING...'
+    if (this.searing && (!held || isCleanPlate(held))) return '{A} PERFECT SEAR - NOW!'
+    if (!held && this.item && this.item.state === 'burnt') return '{A} TAKE BURNT PATTY'
+    return super.prompt(player)
+  }
+
+  use (player, dt) {
+    if (!this.onFire || !isTool(player.item, 'extinguisher')) return false
+    this.spray += dt
+    this.sprayed = true
+    if (Math.random() < dt * 30) this.foam.emitParticle(2)
+    if (Math.random() < dt * 6) sfx('spray')
+    if (this.spray >= TUNING.extinguishTime) this.extinguish()
+    return true
+  }
+
+  ignite () {
+    this.onFire = true
+    this.fireTimer = 0
+    this.spray = 0
+    this.setItem(null)
+    this.flames.start()
+    this.scene.onFire(this)
+  }
+
+  extinguish () {
+    this.onFire = false
+    this.spray = 0
+    this.flames.stop()
+    this.sprite.clearTint()
+    this.foam.emitParticle(12)
+    this.scene.onFireOut(this)
+  }
+
+  update (dt) {
+    if (this.onFire) {
+      this.updateFire(dt)
+      return
+    }
+    this.hint.setVisible(false)
+    const it = this.item
+    if (!it || it.type !== 'ing' || it.id !== 'patty') {
+      this.drawBar(null)
+      return
+    }
+    const cook = TUNING.grillCookTime
+    const burn = TUNING.grillBurnTime
+    if (it.state !== 'burnt') this.timer += dt
+
+    this.sizzle -= dt
+    if (this.sizzle <= 0 && it.state !== 'burnt') {
+      sfx('sizzle')
+      this.sizzle = 1.4
+    }
+
+    if (it.state === 'raw' && this.timer >= cook) {
+      it.state = 'cooked'
+      this.refreshItem()
+      sfx('ready')
+    } else if (it.state === 'cooked' && !RunState.has('ghost') && this.timer >= cook + burn) {
+      it.state = 'burnt'
+      this.refreshItem()
+      this.scene.onBurn(this)
+    }
+
+    if (it.state === 'raw') {
+      this.drawBar(this.timer / cook, 0xf79a3e)
+    } else if (this.searing) {
+      const blink = Math.floor(this.scene.time.now / 120) % 2 === 0
+      this.drawBar(1, blink ? 0xffd93d : 0xffffff)
+    } else if (it.state === 'cooked' && !RunState.has('ghost')) {
+      const r = (this.timer - cook) / burn
+      const blink = r > 0.5 && Math.floor(this.scene.time.now / 150) % 2 === 0
+      this.drawBar(1 - r, blink ? 0xffffff : 0xff4040)
+      if (r > 0.4 && Math.random() < dt * 8) this.smoke.emitParticle(1)
+    } else if (it.state === 'burnt' && this.scene.fireEnabled) {
+      // Burnt food left on the grill catches fire.
+      this.fireTimer += dt
+      const blink = Math.floor(this.scene.time.now / 100) % 2 === 0
+      this.drawBar(1 - this.fireTimer / TUNING.fireDelay, blink ? 0xffd93d : 0xff4040)
+      if (this.fireTimer >= TUNING.fireDelay) this.ignite()
+    } else {
+      this.drawBar(null)
+    }
+    if (it.state === 'burnt' && Math.random() < dt * 14) this.smoke.emitParticle(1)
+  }
+
+  updateFire (dt) {
+    if (!this.sprayed) this.spray = Math.max(0, this.spray - dt * 0.5)
+    this.sprayed = false
+    this.sprite.setTint(Math.floor(this.scene.time.now / 120) % 2 ? 0xff8060 : 0xffd0a0)
+    if (Math.random() < dt * 10) this.smoke.emitParticle(1)
+    this.hint.setVisible(Math.floor(this.scene.time.now / 300) % 2 === 0)
+    this.drawBar(this.spray > 0 ? this.spray / TUNING.extinguishTime : null, 0xffffff)
+  }
+
+  destroy () {
+    super.destroy()
+    this.smoke.destroy()
+    this.flames.destroy()
+    this.foam.destroy()
+    this.hint.destroy()
+  }
+}
+
+export class Crate extends Station {
+  constructor (scene, tx, ty, id) {
+    super(scene, tx, ty, 'crate')
+    this.id = id
+    this.icon = scene.add.image(this.x, this.y - 1, `${id}_raw`).setDepth(this.y + 9)
+  }
+
+  interact (player) {
+    const held = player.item
+    if (!held) {
+      player.setItem(ingredient(this.id))
+      sfx('pickup')
+      return true
+    }
+    if (isCleanPlate(held) && addToPlate(held, ingredient(this.id))) {
+      player.refreshItem()
+      sfx('pickup')
+      return true
+    }
+    if (held.type === 'ing' && held.id === this.id && held.state === 'raw') {
+      player.setItem(null)
+      sfx('drop')
+      return true
+    }
+    return false
+  }
+
+  receive () {
+    return false
+  }
+
+  prompt (player) {
+    const held = player.item
+    const name = NAMES[this.id]
+    if (!held) return `{A} GRAB ${name}`
+    if (isCleanPlate(held) && INGREDIENTS[this.id].plateReady === 'raw' && canAddToPlate(held.contents, this.id)) return `{A} ADD ${name}`
+    if (held.type === 'ing' && held.id === this.id && held.state === 'raw') return '{A} PUT BACK'
+    return null
+  }
+}
+
+export class PlateStack extends Station {
+  constructor (scene, tx, ty) {
+    super(scene, tx, ty, 'counter')
+    this.count = TUNING.plateCount
+    this.plates = []
+    this.render()
+  }
+
+  addPlate () {
+    this.count++
+    this.render()
+  }
+
+  render () {
+    this.plates.forEach(p => p.destroy())
+    this.plates = []
+    for (let i = 0; i < Math.min(this.count, 6); i++) {
+      this.plates.push(this.scene.add.image(this.x, this.y - 2 - i * 3, 'plate').setDepth(this.y + 9 + i * 0.01))
+    }
+  }
+
+  interact (player) {
+    const held = player.item
+    if (this.count > 0 && (!held || player.canStack(plate()))) {
+      this.count--
+      this.render()
+      if (held) player.stack(plate())
+      else player.setItem(plate())
+      sfx('pickup')
+      return true
+    }
+    if (isCleanPlate(held) && held.contents.length === 0) {
+      player.setItem(null)
+      this.addPlate()
+      sfx('drop')
+      return true
+    }
+    return false
+  }
+
+  receive () {
+    return false
+  }
+
+  prompt (player) {
+    const held = player.item
+    if (this.count > 0 && (!held || player.canStack(plate()))) return '{A} TAKE PLATE'
+    if (isCleanPlate(held) && held.contents.length === 0) return '{A} RETURN PLATE'
+    if (!held && this.count === 0) return 'NO PLATES - WASH SOME'
+    return null
+  }
+}
+
+export class Sink extends Station {
+  constructor (scene, tx, ty, plateStack) {
+    super(scene, tx, ty, 'sink')
+    this.plateStack = plateStack
+    this.queue = 0
+    this.timer = 0
+    this.countText = scene.add.text(this.x + 10, this.y - 14, '', {
+      fontFamily: FONT, fontSize: '8px', color: '#ffffff'
+    }).setOrigin(0.5).setDepth(8600)
+  }
+
+  addDirty () {
+    this.queue++
+    this.render()
+  }
+
+  render () {
+    this.itemView.setItem(this.queue > 0 ? plate(true) : null)
+    this.countText.setText(this.queue > 1 ? `x${this.queue}` : '')
+  }
+
+  interact (player) {
+    if (!isDirtyPlate(player.item)) return false
+    player.setItem(null)
+    this.addDirty()
+    sfx('wash')
+    return true
+  }
+
+  update (dt) {
+    if (this.queue <= 0) {
+      this.drawBar(null)
+      return
+    }
+    this.timer += dt * (RunState.has('sink') ? 2 : 1)
+    if (this.timer >= TUNING.washTime) {
+      this.timer = 0
+      this.queue--
+      this.plateStack.addPlate()
+      this.render()
+      sfx('pickup')
+    }
+    this.drawBar(this.timer / TUNING.washTime, 0x69b4ea)
+  }
+
+  receive () {
+    return false
+  }
+
+  prompt (player) {
+    return isDirtyPlate(player.item) ? '{A} WASH PLATE' : null
+  }
+}
+
+export class Bin extends Station {
+  constructor (scene, tx, ty) {
+    super(scene, tx, ty, 'bin')
+  }
+
+  interact (player) {
+    const held = player.item
+    if (held && held.type === 'ing') {
+      player.setItem(null)
+      sfx('drop')
+      return true
+    }
+    if (isCleanPlate(held) && held.contents.length) {
+      held.contents = []
+      held.quality = 0
+      player.refreshItem()
+      sfx('drop')
+      return true
+    }
+    return false
+  }
+
+  receive (item) {
+    return item.type === 'ing'
+  }
+
+  prompt (player) {
+    const held = player.item
+    if (held && held.type === 'ing') return '{A} TRASH IT'
+    if (isCleanPlate(held) && held.contents.length) return '{A} EMPTY PLATE'
+    return null
+  }
+}
+
+// Table tile plus the chair to its right. Front-of-house actions go through here.
+export class Table extends Station {
+  constructor (scene, tx, ty, number) {
+    super(scene, tx, ty, 'table')
+    this.number = number
+    const seat = tileCenter(tx + 1, ty)
+    this.seat = seat
+    this.anchors = [{ x: this.x, y: this.y }, seat]
+    this.chair = scene.add.image(seat.x, seat.y, 'chair').setDepth(seat.y - 2)
+    scene.addSolid(seat.x, seat.y)
+    this.open = false
+    this.customer = null
+    this.dirty = false
+    this.itemView.setPosition(this.x, this.y - 4)
+    this.label = scene.add.text(this.x - 10, this.y - 12, `${number}`, {
+      fontFamily: FONT, fontSize: '8px', color: '#ffd93d'
+    }).setOrigin(0.5).setDepth(this.y + 10)
+  }
+
+  highlightAt () {
+    return { x: (this.x + this.seat.x) / 2, y: this.y }
+  }
+
+  reachableBy (player) {
+    return player.role === 'server' && this.open
+  }
+
+  get free () {
+    return this.open && !this.customer && !this.dirty
+  }
+
+  setOpen (open) {
+    this.open = open
+    this.sprite.setTexture(open ? 'table' : 'table_closed')
+    this.label.setVisible(open)
+  }
+
+  setDirty (dirty) {
+    this.dirty = dirty
+    this.itemView.setItem(dirty ? plate(true) : null)
+  }
+
+  interact (player) {
+    const scene = this.scene
+    if (this.dirty && (!player.item || player.canStack(plate(true)))) {
+      scene.chainAction('bus', this.x, this.y)
+      this.setDirty(false)
+      if (player.item) player.stack(plate(true))
+      else player.setItem(plate(true))
+      sfx('pickup')
+      return true
+    }
+    if (scene.leading && this.free) {
+      scene.seat(scene.leading, this)
+      return true
+    }
+    const c = this.customer
+    if (c && c.state === 'ready') {
+      scene.takeOrder(c)
+      return true
+    }
+    if (c && c.state === 'waiting' && (isServable(player.item) || isServable(player.extra))) {
+      return scene.deliver(c, player)
+    }
+    return false
+  }
+
+  receive () {
+    return false
+  }
+
+  prompt (player) {
+    const held = player.item
+    const c = this.customer
+    if (this.dirty && (!held || player.canStack(plate(true)))) return '{A} CLEAR TABLE'
+    if (this.scene.leading && this.free) return '{A} SEAT GUEST'
+    if (c && c.state === 'ready') return '{A} TAKE ORDER'
+    if (c && c.state === 'waiting') {
+      if ([held, player.extra].some(it => isServable(it) && plateDish(it) === c.order)) return '{A} SERVE'
+      if (isServable(held)) return 'WRONG DISH'
+      return 'WAITING FOR FOOD'
+    }
+    return null
+  }
+}
