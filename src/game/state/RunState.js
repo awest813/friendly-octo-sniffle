@@ -1,5 +1,6 @@
 import { TUNING } from '@/game/constants'
 import Settings, { DIFFICULTIES } from '@/game/state/settings'
+import { LAYOUTS } from '@/game/data/map'
 
 const RunState = {
   reset () {
@@ -20,6 +21,13 @@ const RunState = {
     this.pets = []
     this.livesBought = 0
     this.petted = 0
+    // Tonight's Special: rolled before the shop so it can be previewed there.
+    this.nextSpecial = null
+    this.lastSpecial = null
+    // A random dining-room floor plan for each run (?layout=COZY forces one).
+    const ids = Object.keys(LAYOUTS)
+    const forced = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('layout')
+    this.layout = ids.includes(forced) ? forced : ids[Math.floor(Math.random() * ids.length)]
     // Locked in for the whole run so it can't be changed mid-way.
     this.difficulty = DIFFICULTIES[Settings.difficulty] ? Settings.difficulty : 'MEDIUM'
   },

@@ -110,16 +110,17 @@ const PAGES = [
     ]
   },
   {
-    title: 'TROUBLE',
+    title: 'TROUBLE & TWISTS',
     color: CSS.danger,
-    icons: ['patty_burnt', '>', 'tool_extinguisher', 'critic', 'pu_ghost', 'pu_skates', 'pu_busboy'],
+    icons: ['patty_burnt', '>', 'tool_extinguisher', 'pu_ghost', 'pu_skates', 'pu_busboy'],
     lines: [
       'From wave 5, burnt food left on a grill catches',
       'fire. Grab the red extinguisher, hold X on it.',
       'Smoke makes every customer lose patience faster.',
       '',
-      'VIP critics (gold tickets) are impatient but',
-      'tip triple. Serve them first.',
+      'TONIGHT\'S SPECIALS: from wave 3, some waves get',
+      'a twist like HAPPY HOUR or BURGER NIGHT. The',
+      'shop tells you what\'s coming next.',
       '',
       'Between waves: spend tips in the shop. Before',
       'waves 3, 5, 7, 9 and 11: draft a power-up.'

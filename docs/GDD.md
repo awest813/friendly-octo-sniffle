@@ -127,7 +127,7 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
 | 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 12 s | all | burnt food left on the grill catches fire (stays on from here) ; **draft before the wave** |
 | 6 | Dinner Rush | 7 | 5 | 30 s | 12 s | all | — |
 | 7 | VIP Food Critic | 8 | 5 | 28 s | 11 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
-| 8 | Full House (Easy finale) | 10 | 6 | 26 s | 18 s (pairs) | all | every table open |
+| 8 | Full House (Easy finale) | 10 | 6 | 27 s | 18 s (pairs) | all | every table open |
 | 9 | Night Owls | 9 | 6 | 26 s | 13 s | all | rusher-heavy crowd ; **draft before the wave** |
 | 10 | Bus Tour (Medium finale) | 9 | 6 | 27 s | 21 s (groups of 3) | all | granny-heavy tour groups: long patience, slow eaters, tables stay busy |
 | 11 | Critics Night | 10 | 6 | 25 s | 11 s | all | 3 critics ; **draft before the wave** |
@@ -136,7 +136,7 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
 
 - **Clearing the finale = the diner is saved (run counts as a win).** Closing Time is a score chase until lives run out.
 - Themed waves (9, 10, 12) add extra weight for one guest type on top of the usual mix, so the crowd feels different.
-- The draft (before waves 3, 5, 7, 9 and 11) is a **pick 1 of 3** from the power-up pool, without duplicates. Either player can move the cursor and confirm.
+- The draft (before waves 3, 5, 7, 9 and 11) is a **pick 1 of 3** from the power-up pool, without duplicates, weighted by rarity (Common 5 : Rare 3 : Epic 2, so about 1 draft in 4 shows an Epic). Rarity is colour-coded on the card. Either player can move the cursor and confirm.
 - Every wave starts with a one-line hint on the bottom wall introducing what's new.
 - **Fire (waves 5+):** a burnt patty left on the grill for 3 s bursts into flames. The burning grill is unusable and nothing can be taken off it. While anything burns, **every customer loses patience 1.5× faster**. Fix: take the extinguisher from its red hook and hold X on the grill for 1.2 s.
 - **Shop (after every wave from wave 2):** tips are your score *and* your currency.
@@ -145,10 +145,37 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
   |---|---|---|
   | +1 Life | $30 | Back up to the 3-life cap |
   | +1 Plate | $12 | Up to 7 plates total |
-  | Calm Music | $20 | Next wave only: patience +20% |
+  | Calm Music | $20 | Next wave only: patience +20%, and a slower, softer music loop |
   | Draft reroll | $15 | In the draft (Y): three new options |
 
   Bigger Tips raises all prices by 20%.
+
+### Floor plans
+
+Each run picks one of three dining-room floor plans at random: **Classic** (two straight rows),
+**Staggered** (zig-zag tables, no straight runs for the Server) and **Cozy** (both rows pulled into
+the middle around one tight aisle). The kitchen, the pass, the queue and the exit aisle never move,
+so the Cook's job and every bot route stay the same; only the Server's floor changes. Tables open in
+reading order as waves grow. `?layout=COZY` forces one for testing.
+
+### Tonight's Specials (run-to-run variety)
+
+From wave 3, every ordinary wave has a 50% chance of a random twist, rolled before the shop so the
+shop can preview it ("NEXT: DINNER RUSH + HAPPY HOUR"). Specials never land on waves 1–2, the
+themed waves (9, 10, 12), the finale or Closing Time, and never twice in a row, so the hand-tuned
+curve stays intact. When the doors open the special is stamped across the dining room, and the
+bottom hint line alternates between the wave's tip and the special.
+
+| Special | Effect | From |
+|---|---|---|
+| Happy Hour | tips ×1.5, guests arrive 15% faster | 3 |
+| Burger Night | burgers weighted ×5 on the order mix, +1 guest | 3 |
+| Salad Bar | salads ×5, tips ×1.1 | 3 |
+| Deluxe Day | deluxes ×4, tips ×1.3 | 5 |
+| Early Birds | +5 granny weight (chill, slow eaters) | 3 |
+| School Trip | +5 kid weight (burgers only, impatient) | 4 |
+| Quiet Night | −1 guest, patience ×1.15 (a breather) | 3 |
+| Big Spenders | Big Tippers ×3 as often | 3 |
 
 ## 6. Power-ups (draft pool)
 
@@ -237,6 +264,7 @@ Findings from the v0.6 soaks:
 - Second soak round (4 runs): 3 of 4 hit the kitchen wall in waves 5–6, all walkouts while waiting for food; only a Charm Aura run reached wave 8. Waves 5–6 now have 7 guests every 12 s, wave 7 has 8, and food patience is 1.9× (was 1.75×).
 - Third soak round (0.9.0, 4 runs): runs ended on waves 4, 6, 6 and 6, every loss from guests waiting for food. Food patience is now 2.05× (was 1.9×); a re-soak of 2 runs then cleared waves 1–7 with zero walkouts in waves 5–6, and both fell in wave 8, the final wave.
 - Fourth soak round (0.10.0): the losses turned out to be an **AI cook bug**, not tuning. The cook marked the oldest matching ticket as sent while the Server served the most impatient guest, so a ticket could be left orphaned and the cook idled while that guest starved; it also never fetched a part stashed on the spare assembly counter. With both fixed, the bots ran Easy waves 1–7 with zero walkouts and won Easy, and on Medium reached waves 8–9. The remaining wall was the step into Full House (arrivals +37% over wave 7, a full-lives wipe in one wave), now a pair every 18 s (was 16 s); Night Owls has fewer rushers (+3, was +5) and a guest every 13 s (was 12 s).
+- Fifth soak round (0.12): wave 8 was still the sharpest step on Medium and Hard (3 of 6 runs lost 2+ lives there, while Easy cleared it cleanly), so Full House guests get 27 s base patience (was 26 s).
 - **Tip inflation:** with streaks, stars, guest multipliers and chains, late waves pay ~$30 per guest (~$250 per wave by wave 6), which made a $30 life meaningless. Shop prices now scale +35% per wave after wave 2, and each extra life costs more than the last (30, 50, 80, 120… before scaling).
 
 ## 7. Architecture (Phaser)
@@ -247,7 +275,7 @@ src/
 └─ game/
    ├─ game.js                Phaser config (640×360, pixelArt, gamepad on, no gravity)
    ├─ constants.js           tile size, palette, tuning numbers
-   ├─ data/                  map.js (ASCII layout), recipes.js, waves.js, powerups.js
+   ├─ data/                  map.js (ASCII floor plans), recipes.js, waves.js, specials.js, powerups.js
    ├─ art/                   pixel-string sprites → generated textures (no binary assets)
    ├─ audio/sfx.js           tiny WebAudio synth (ding, sizzle, pop, error)
    ├─ input/PlayerInput.js   gamepad-first input with keyboard fallback + rumble
@@ -281,6 +309,7 @@ Godot → Phaser mapping used:
 - [x] 640×360 viewport, pixel art, pixel font
 - [x] Lobby: claim Cook/Server by pad (keyboard fallback)
 - [x] Map from ASCII: walls, kitchen, dining room, doorway, pass counters
+- [x] Three dining-room floor plans (Classic, Staggered, Cozy), one picked at random per run; `npm run check:layouts` (also run in CI) verifies every plan keeps the kitchen, queue and exit aisle intact and every table reachable
 - [x] Cook + Server controllers (analog, 8-dir), held-item slot over the head
 - [x] Stations: crates, boards (hold to chop), grills (cook → burn), counters, plate stack, sink, bin, tables
 - [x] Customers: queue → follow → seat → order → wait → eat → leave (angry on 0 patience)
@@ -306,7 +335,9 @@ Godot → Phaser mapping used:
 **Slice 4 — ready for players**
 - [x] Title screen, main menu, How to Play, Settings, High Scores, attract demo
 - [x] AI teammate skill levels, picked in the lobby or in Settings
-- [x] Procedural music (menu and in-game), ducked while paused
+- [x] Procedural music, ducked while paused: menu, two alternating gameplay grooves, a finale track, Closing Time, and a calm loop for a Calm Music wave. Each loop alternates two lead phrases.
+- [x] Jingles for a special, PERFECT / CLUTCH serves, saving the diner, and the run ending
+- [x] Tonight's Specials: random wave twists from wave 3
 - [x] Launcher: loading screen, load-failure and crash screens, fullscreen button (F), touch-device notice, favicon and page metadata
 - [x] Auto-pause on window blur; inputs ignore buttons still held from the previous screen
 - [x] GitHub Pages workflow (build on PR, deploy master); relative asset paths

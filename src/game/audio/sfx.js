@@ -86,7 +86,21 @@ const SOUNDS = {
   meow: () => { tone(700, 0, 0.12, 'triangle', 0.5, 1000); tone(1000, 0.12, 0.2, 'triangle', 0.5, 600) },
   adopt: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.08, 0.16, 'triangle', 0.45)),
   lucky: () => [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, i * 0.05, 0.1, 'triangle', 0.35)),
-  wave: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, 'square', 0.45))
+  wave: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.14, 'square', 0.45)),
+  // Tonight's Special: a quick two-note "ta-da".
+  special: () => { tone(784, 0, 0.1, 'square', 0.45); tone(1175, 0.1, 0.22, 'square', 0.45); tone(1568, 0.1, 0.22, 'triangle', 0.3) },
+  perfect: () => { tone(1568, 0, 0.08, 'triangle', 0.4); tone(2349, 0.05, 0.14, 'triangle', 0.35) },
+  clutch: () => { tone(392, 0, 0.08, 'square', 0.4, 784); tone(1047, 0.08, 0.12, 'square', 0.4) },
+  // Diner saved: a little fanfare that resolves up an octave.
+  win: () => [[523, 0], [659, 0.1], [784, 0.2], [1047, 0.3], [784, 0.45], [1047, 0.55]].forEach(([f, t], i) =>
+    tone(f, t, i === 5 ? 0.5 : 0.12, 'square', 0.45)),
+  // A saved run ending in Closing Time: lights down, a gentle falling chime.
+  lastCall: () => [1047, 784, 659, 523].forEach((f, i) => tone(f, i * 0.16, 0.3, 'triangle', 0.4)),
+  // Run over: a falling "wah-wah".
+  lose: () => {
+    [[392, 0], [370, 0.22], [349, 0.44]].forEach(([f, t]) => tone(f, t, 0.2, 'sawtooth', 0.4))
+    tone(330, 0.66, 0.6, 'sawtooth', 0.4, 220)
+  }
 }
 
 export function audioContext () {

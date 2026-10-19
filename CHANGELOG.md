@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.12.0
+
+- **Floor plans:** each run picks one of three dining-room layouts at random: Classic, Staggered
+  (zig-zag tables) or Cozy (both rows pulled into the middle). The kitchen never changes.
+- `npm run check:layouts` checks every floor plan: kitchen, queue and exit aisle intact; every table,
+  pass counter, the kitchen doorway and the queue reachable by the Server; decor and pet paths
+  clear. CI runs it before building. It shares the game's own walk rules from `map.js`.
+- **Fixes from a code review:** the AI cook could build a duplicate of a dish already parked for the
+  current ticket, and grilled a spare patty for parked dishes; it also works out its open orders
+  once per decision instead of several times. A saved run that ends in Closing Time plays a gentle
+  "last call" instead of the diner-saved fanfare a second time.
+- Full House (wave 8) guests are a touch more patient (27 s, was 26 s): it was still the sharpest
+  step on Medium and Hard.
+
+## 0.11.0
+
+- **Tonight's Specials:** from wave 3, about half the waves get a random twist: Happy Hour, Burger
+  Night, Salad Bar, Deluxe Day, Early Birds, School Trip, Quiet Night or Big Spenders. The shop
+  previews the next one, it's stamped across the room when the doors open, and the hint line
+  explains it. Never on the finale or themed waves, never twice in a row.
+- **Music variety:** two gameplay grooves alternate by wave, the finale and Closing Time have their
+  own tracks, and every loop alternates two melodies. CALM MUSIC from the shop now actually plays
+  calm music.
+- **New sounds:** a special's "ta-da", PERFECT and CLUTCH stings, a fanfare when the diner is saved
+  and a "wah-wah" when the run ends.
+- **Fixes from a code audit:** the AI cook could loop picking up and putting back a finished dish
+  when every pass was full (letting a patty burn); CALM MUSIC bought before the finale now plays the
+  calm track, and it isn't sold before Closing Time, where "next wave only" never ran out; pausing
+  in the first moment of a run says GET READY instead of WAVE 0.
+- How to Play explains Tonight's Specials.
+
+## 0.10.1
+
+- **Power-up rarity is real now:** drafts are weighted Common 5 : Rare 3 : Epic 2 (about 1 draft in
+  4 shows an Epic), and the rarity label is colour-coded. Before, every card was equally likely.
+- Streak call-outs keep coming on long runs: 3, 5, 10, 15, 20, then every 10.
+- The shop warns when the next wave is the finale.
+- Beans' card says what it does: guests *in line* lose patience slower.
+
 ## 0.10.0
 
 - **Difficulty is now run length:** Easy saves the diner after 8 waves, Medium after 10 and Hard

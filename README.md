@@ -65,6 +65,9 @@ disconnect, press A on any free pad, or that role's keyboard key.
 - **Rewards:** every serve in a row grows your streak (up to +50% tips). Serve fast for PERFECT,
   save a guest at the last second for CLUTCH. Each wave is rated out of 3 stars, with bonus tips.
   Power-up drafts come before waves 3, 5, 7, 9 and 11.
+- **Floor plans:** each run picks one of three dining-room layouts at random.
+- **Tonight's Specials:** from wave 3, about half the waves get a random twist (Happy Hour, Burger
+  Night, Big Spenders...), previewed in the shop, so no two runs play the same.
 - **Diner pets:** after every 5th wave it's Adoption Day. Take home a shelter dog or cat (free,
   for the whole run): each brings a bonus like calmer guests, bigger tips or more luck. Walk up and
   press A to pet them for a patience boost for every waiting guest.
@@ -94,7 +97,9 @@ npm start       # serve the production build at localhost:5000
 
 - `localhost:8080/?autoplay` runs bot vs bot through full runs, choosing draft cards and shop items
   automatically and logging per-wave stats to the console. It's the soak and balance test. Add
-  `&diff=EASY`, `MEDIUM` or `HARD` to pick the difficulty.
+  `&diff=EASY`, `MEDIUM` or `HARD` to pick the difficulty, and `&layout=CLASSIC`, `STAGGERED` or
+  `COZY` to pick the floor plan (`?layout=` works in normal play too).
+- `npm run check:layouts` checks every floor plan against the rules the game relies on.
 - In development builds, `window.__duo` exposes the Phaser game and `RunState`.
 - All art is generated at boot from pixel strings (`src/game/art/`). Sound effects and music come
   from a small WebAudio synth (`src/game/audio/`), so there are no binary assets.
@@ -103,7 +108,7 @@ npm start       # serve the production build at localhost:5000
 src/
 ├─ components/  Vue launcher: loading screen, crash screen, fullscreen button
 └─ game/
-   ├─ data/      map (ASCII layout), recipes, waves, power-ups
+   ├─ data/      map (ASCII floor plans), recipes, waves, specials, power-ups
    ├─ art/       pixel sprites → generated textures
    ├─ audio/     sfx + procedural music
    ├─ input/     gamepad-first input (PlayerInput), menu input from any device (AnyInput)

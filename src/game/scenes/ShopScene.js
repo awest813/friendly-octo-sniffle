@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, FONT, CSS, TUNING, SHOP } from '@/game/constants'
 import { waveFor } from '@/game/data/waves'
+import { SPECIAL_BY_ID } from '@/game/data/specials'
 import PlayerInput from '@/game/input/PlayerInput'
 import Menu from '@/game/ui/Menu'
 import RunState from '@/game/state/RunState'
@@ -53,14 +54,16 @@ export default class ShopScene extends Phaser.Scene {
       },
       {
         label: 'CALM MUSIC',
-        detail: 'Next wave: customer patience +20%.',
+        // Closing Time never ends, so "next wave only" can't apply to it.
+        detail: next.endless ? 'Not sold for Closing Time.' : 'Next wave: customer patience +20%.',
         price: prices.calm,
-        enabled: () => !RunState.calm && RunState.tips >= prices.calm,
+        enabled: () => !next.endless && !RunState.calm && RunState.tips >= prices.calm,
         action: () => this.buy(prices.calm, () => { RunState.calm = true })
       },
       {
         label: 'OPEN THE DOORS',
-        detail: `NEXT: ${next.name}`,
+        detail: RunState.wave + 1 === RunState.goal ? `NEXT: ${next.name} - THE FINALE`
+          : RunState.nextSpecial ? `NEXT: ${next.name} + ${SPECIAL_BY_ID[RunState.nextSpecial].name}` : `NEXT: ${next.name}`,
         action: () => this.finish()
       }
     ]

@@ -14,11 +14,15 @@ export const POWERUPS = [
   { id: 'clover', cat: 'SERVER', name: 'LUCKY STREAK', desc: 'Streaks build twice as fast, up to x2.', rarity: 'RARE', icon: 'pu_clover' }
 ]
 
-export function draftOptions (owned, count = 3) {
-  const pool = POWERUPS.filter(p => !owned.has(p.id))
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]]
-  }
-  return pool.slice(0, count)
+// How often each rarity turns up in a draft, relative to the others.
+export const RARITY_WEIGHT = { COMMON: 5, RARE: 3, EPIC: 2 }
+
+// Pick `count` power-ups not already owned, weighted by rarity, no repeats
+// (weighted sampling: each card gets a random key rand^(1/weight), best keys win).
+export function draftOptions (owned, count = 3, rand = Math.random) {
+  return POWERUPS.filter(p => !owned.has(p.id))
+    .map(p => ({ p, key: Math.pow(rand(), 1 / RARITY_WEIGHT[p.rarity]) }))
+    .sort((a, b) => b.key - a.key)
+    .slice(0, count)
+    .map(e => e.p)
 }
