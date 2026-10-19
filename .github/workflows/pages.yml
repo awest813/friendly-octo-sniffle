@@ -23,8 +23,8 @@ jobs:
       contents: read
       pages: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -34,10 +34,13 @@ jobs:
       # Fails with a clear message if Pages isn't enabled for the repository.
       - uses: actions/configure-pages@v5
         if: github.event_name != 'pull_request'
+      # One artifact name per attempt: a re-run keeps the earlier attempt's
+      # artifacts, and deploy-pages refuses to pick between two with one name.
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
           path: dist
+          name: github-pages-${{ github.run_attempt }}
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -52,3 +55,5 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
