@@ -11,6 +11,8 @@
   current ticket, and grilled a spare patty for parked dishes; it also works out its open orders
   once per decision instead of several times. A saved run that ends in Closing Time plays a gentle
   "last call" instead of the diner-saved fanfare a second time.
+- Full House (wave 8) guests are a touch more patient (27 s, was 26 s): it was still the sharpest
+  step on Medium and Hard.
 
 ## 0.11.0
 

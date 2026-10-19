@@ -127,7 +127,7 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
 | 5 | Fire in the Kitchen (mid-boss) | 7 | 4 | 30 s | 12 s | all | burnt food left on the grill catches fire (stays on from here) ; **draft before the wave** |
 | 6 | Dinner Rush | 7 | 5 | 30 s | 12 s | all | — |
 | 7 | VIP Food Critic | 8 | 5 | 28 s | 11 s | all | 2 critics: 15 s patience, ×3 tips ; **draft before the wave** |
-| 8 | Full House (Easy finale) | 10 | 6 | 26 s | 18 s (pairs) | all | every table open |
+| 8 | Full House (Easy finale) | 10 | 6 | 27 s | 18 s (pairs) | all | every table open |
 | 9 | Night Owls | 9 | 6 | 26 s | 13 s | all | rusher-heavy crowd ; **draft before the wave** |
 | 10 | Bus Tour (Medium finale) | 9 | 6 | 27 s | 21 s (groups of 3) | all | granny-heavy tour groups: long patience, slow eaters, tables stay busy |
 | 11 | Critics Night | 10 | 6 | 25 s | 11 s | all | 3 critics ; **draft before the wave** |
@@ -264,6 +264,7 @@ Findings from the v0.6 soaks:
 - Second soak round (4 runs): 3 of 4 hit the kitchen wall in waves 5–6, all walkouts while waiting for food; only a Charm Aura run reached wave 8. Waves 5–6 now have 7 guests every 12 s, wave 7 has 8, and food patience is 1.9× (was 1.75×).
 - Third soak round (0.9.0, 4 runs): runs ended on waves 4, 6, 6 and 6, every loss from guests waiting for food. Food patience is now 2.05× (was 1.9×); a re-soak of 2 runs then cleared waves 1–7 with zero walkouts in waves 5–6, and both fell in wave 8, the final wave.
 - Fourth soak round (0.10.0): the losses turned out to be an **AI cook bug**, not tuning. The cook marked the oldest matching ticket as sent while the Server served the most impatient guest, so a ticket could be left orphaned and the cook idled while that guest starved; it also never fetched a part stashed on the spare assembly counter. With both fixed, the bots ran Easy waves 1–7 with zero walkouts and won Easy, and on Medium reached waves 8–9. The remaining wall was the step into Full House (arrivals +37% over wave 7, a full-lives wipe in one wave), now a pair every 18 s (was 16 s); Night Owls has fewer rushers (+3, was +5) and a guest every 13 s (was 12 s).
+- Fifth soak round (0.12): wave 8 was still the sharpest step on Medium and Hard (3 of 6 runs lost 2+ lives there, while Easy cleared it cleanly), so Full House guests get 27 s base patience (was 26 s).
 - **Tip inflation:** with streaks, stars, guest multipliers and chains, late waves pay ~$30 per guest (~$250 per wave by wave 6), which made a $30 life meaningless. Shop prices now scale +35% per wave after wave 2, and each extra life costs more than the last (30, 50, 80, 120… before scaling).
 
 ## 7. Architecture (Phaser)
