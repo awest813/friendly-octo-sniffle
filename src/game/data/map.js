@@ -65,5 +65,26 @@ export function useLayout (id) {
   MAP.splice(0, MAP.length, ...plan)
 }
 
+// Plain data and pure functions only, no imports: scripts/check-layouts.mjs
+// loads this file directly in Node.
+
+// Spots in the dining room that every plan must leave as open floor: the
+// plant pots, and the tiles a pet walks through to reach the door.
+export const PLANT_TILES = [[8, 1], [18, 1]]
+export const PET_DOOR_TILES = [[17, 7], [17, 8], [16, 8], [17, 6]]
+
+const FLOOR = '.12Q'
+
+// Whether a role can stand on (tx, ty) in `map` (rows of characters). Only
+// the Server fits through the kitchen doorway, and the tile right of a table
+// is its solid chair.
+export function isWalkable (map, tx, ty, role) {
+  const ch = map[ty] && map[ty][tx]
+  if (!ch) return false
+  if (ch === 'D') return role === 'server'
+  if (map[ty][tx - 1] === 'T') return false
+  return FLOOR.includes(ch)
+}
+
 export const KITCHEN_MAX_COL = 6
 export const EXIT_AISLE_COL = 17

@@ -30,6 +30,10 @@ export default class CookBot extends Bot {
   // which ticket a dish was "for" can't drift when the Server serves a
   // different guest with the same order.
   openOrders () {
+    return this.memo || this.countOpenOrders()
+  }
+
+  countOpenOrders () {
     const open = this.scene.rail.tickets
       .map(t => t.order)
       .filter(o => o.customer.state === 'waiting')
@@ -59,10 +63,8 @@ export default class CookBot extends Bot {
     return this.openOrders().some(o => o.recipe === dish)
   }
 
-  // Put something down out of the way: the spare counter first, so the
-  // assembly counters stay free for building plates.
   stash (S) {
-    const free = S.counters.find(c => !c.item && !c.assembly) || S.counters.find(c => !c.item)
+    const free = S.counters.find(c => !c.item)
     return free ? this.tap(free) : this.tap(S.bin)
   }
 
@@ -97,7 +99,17 @@ export default class CookBot extends Bot {
     return this.stash(S)
   }
 
+  // openOrders() is asked for many times per decision; work it out once.
   decide () {
+    this.memo = this.countOpenOrders()
+    try {
+      return this.choose()
+    } finally {
+      this.memo = null
+    }
+  }
+
+  choose () {
     const S = this.stations
     const held = this.player.item
 
@@ -117,7 +129,9 @@ export default class CookBot extends Bot {
       const dish = plateDish(a.item)
       return !!dish && dish !== (order && order.recipe) && this.finished(a.item.contents, dish, order && order.recipe)
     }
-    const plateSt = S.assembly.find(a => isCleanPlate(a.item) && !parked(a)) || null
+    // Build on a plate that's already this ticket's dish if there is one.
+    const plates = S.assembly.filter(a => isCleanPlate(a.item) && !parked(a))
+    const plateSt = plates.find(a => order && plateDish(a.item) === order.recipe) || plates[0] || null
     if (held) return this.placeHeld(held, S, plateSt, order)
 
     const burnt = S.grills.find(g => g.item && g.item.state === 'burnt')
@@ -151,8 +165,10 @@ export default class CookBot extends Bot {
     if (stashed) return this.tap(stashed)
 
     // Grilling is the slowest step: keep a patty going for every open order that needs one.
+    // Parked dishes still count as open tickets, but their patty is already in.
+    const parkedPatties = S.assembly.filter(a => isCleanPlate(a.item) && parked(a) && a.item.contents.includes('patty')).length
     const pattyDemand = this.openOrders().filter(o => RECIPES[o.recipe].parts.includes('patty')).length -
-      (onPlate.includes('patty') ? 1 : 0)
+      (onPlate.includes('patty') ? 1 : 0) - parkedPatties
     const pattySupply = S.grills.filter(g => g.item && g.item.id === 'patty' && g.item.state !== 'burnt').length +
       S.counters.filter(c => c.item && c.item.id === 'patty' && c.item.state === 'cooked').length
     if (pattyDemand > pattySupply && S.grills.some(g => !g.item && !g.onFire)) return this.tap(S.crate('patty'))

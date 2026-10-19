@@ -1,11 +1,10 @@
 import Phaser from 'phaser'
 import { TILE, MAP_TOP, FONT } from '@/game/constants'
-import { MAP, KITCHEN_MAX_COL } from '@/game/data/map'
+import { MAP, KITCHEN_MAX_COL, PET_DOOR_TILES } from '@/game/data/map'
 import { PETTING } from '@/game/data/pets'
 import { tileOf, key, findPath, walkable } from '@/game/ai/grid'
 
 const SPEED = 55
-const DOOR_TILES = [[17, 7], [17, 8], [16, 8], [17, 6]]
 
 const center = (tx, ty) => ({ x: tx * TILE + TILE / 2, y: MAP_TOP + ty * TILE + TILE / 2 })
 
@@ -74,7 +73,7 @@ export default class Pet {
   chooseSpot () {
     const def = this.def
     if (def.home === 'door') {
-      const [tx, ty] = Phaser.Utils.Array.GetRandom(DOOR_TILES)
+      const [tx, ty] = Phaser.Utils.Array.GetRandom(PET_DOOR_TILES)
       return { tx, ty }
     }
     const server = this.scene.server

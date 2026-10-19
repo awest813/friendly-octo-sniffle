@@ -4,8 +4,13 @@
 
 - **Floor plans:** each run picks one of three dining-room layouts at random: Classic, Staggered
   (zig-zag tables) or Cozy (both rows pulled into the middle). The kitchen never changes.
-- `npm run check:layouts` checks every floor plan keeps the kitchen, queue and exit aisle intact
-  and every table reachable; CI runs it before building.
+- `npm run check:layouts` checks every floor plan: kitchen, queue and exit aisle intact; every table,
+  pass counter, the kitchen doorway and the queue reachable by the Server; decor and pet paths
+  clear. CI runs it before building. It shares the game's own walk rules from `map.js`.
+- **Fixes from a code review:** the AI cook could build a duplicate of a dish already parked for the
+  current ticket, and grilled a spare patty for parked dishes; it also works out its open orders
+  once per decision instead of several times. A saved run that ends in Closing Time plays a gentle
+  "last call" instead of the diner-saved fanfare a second time.
 
 ## 0.11.0
 

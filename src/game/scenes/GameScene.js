@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, TILE, MAP_TOP, COLORS, TUNING, FONT } from '@/game/constants'
-import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL, useLayout } from '@/game/data/map'
+import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL, PLANT_TILES, useLayout } from '@/game/data/map'
 import { waveFor, CRITIC } from '@/game/data/waves'
 import { rollSpecial, withSpecial, pickOrder } from '@/game/data/specials'
 import { GUESTS, rollGuest } from '@/game/data/guests'
@@ -197,7 +197,7 @@ export default class GameScene extends Phaser.Scene {
   // Purely visual: none of this is solid or interactive.
   addDecor () {
     const at = (tx, ty) => tileCenter(tx, ty)
-    ;[[8, 1], [18, 1]].forEach(([tx, ty]) => {
+    PLANT_TILES.forEach(([tx, ty]) => {
       const c = at(tx, ty)
       this.add.image(c.x, c.y - 4, 'plant').setDepth(c.y + 8)
     })
@@ -761,7 +761,9 @@ export default class GameScene extends Phaser.Scene {
     bus.emit('run_over', { won })
     this.players.forEach(p => p.body.setVelocity(0, 0))
     stopMusic()
-    sfx(won ? 'win' : 'lose')
+    // The diner was already saved (and cheered) at the finale; Closing Time
+    // ending is a softer last call.
+    sfx(won ? 'lastCall' : 'lose')
     banner(this, won ? 'LAST CALL!' : 'RUN OVER', won ? 'THE DINER CLOSES' : 'TOO MANY ANGRY CUSTOMERS', won ? '#ffd93d' : '#ff4040', 1800)
     this.time.delayedCall(2200, () => {
       if (this.demo) this.scene.start('TitleScene', { skipSplash: true })

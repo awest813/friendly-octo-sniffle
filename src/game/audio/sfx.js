@@ -94,6 +94,8 @@ const SOUNDS = {
   // Diner saved: a little fanfare that resolves up an octave.
   win: () => [[523, 0], [659, 0.1], [784, 0.2], [1047, 0.3], [784, 0.45], [1047, 0.55]].forEach(([f, t], i) =>
     tone(f, t, i === 5 ? 0.5 : 0.12, 'square', 0.45)),
+  // A saved run ending in Closing Time: lights down, a gentle falling chime.
+  lastCall: () => [1047, 784, 659, 523].forEach((f, i) => tone(f, i * 0.16, 0.3, 'triangle', 0.4)),
   // Run over: a falling "wah-wah".
   lose: () => {
     [[392, 0], [370, 0.22], [349, 0.44]].forEach(([f, t]) => tone(f, t, 0.2, 'sawtooth', 0.4))

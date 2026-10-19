@@ -1,7 +1,5 @@
 import { TILE, MAP_TOP } from '@/game/constants'
-import { MAP } from '@/game/data/map'
-
-const FLOOR = new Set(['.', '1', '2', 'Q'])
+import { MAP, isWalkable } from '@/game/data/map'
 
 export const key = (tx, ty) => `${tx},${ty}`
 
@@ -10,12 +8,7 @@ export function tileOf (x, y) {
 }
 
 export function walkable (tx, ty, role) {
-  const ch = MAP[ty] && MAP[ty][tx]
-  if (!ch) return false
-  if (ch === 'D') return role === 'server'
-  // The tile right of a table is its (solid) chair.
-  if (MAP[ty][tx - 1] === 'T') return false
-  return FLOOR.has(ch)
+  return isWalkable(MAP, tx, ty, role)
 }
 
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]]
