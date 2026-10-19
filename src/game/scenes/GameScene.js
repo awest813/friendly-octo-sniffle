@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import { WIDTH, HEIGHT, TILE, MAP_TOP, COLORS, TUNING, FONT } from '@/game/constants'
-import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL } from '@/game/data/map'
+import { MAP, KITCHEN_MAX_COL, EXIT_AISLE_COL, useLayout } from '@/game/data/map'
 import { waveFor, CRITIC } from '@/game/data/waves'
 import { rollSpecial, withSpecial, pickOrder } from '@/game/data/specials'
 import { GUESTS, rollGuest } from '@/game/data/guests'
@@ -47,6 +47,7 @@ export default class GameScene extends Phaser.Scene {
     this.demo = !!this.registry.get('demo')
     this.cameras.main.setBackgroundColor(COLORS.bg)
     this.physics.world.setBounds(0, MAP_TOP, WIDTH, HEIGHT - MAP_TOP)
+    useLayout(RunState.layout)
     this.solids = this.physics.add.staticGroup()
     this.cookOnly = this.physics.add.staticGroup()
     this.stations = []

@@ -150,6 +150,14 @@ Settings and scores saved before 0.10 used Relaxed / Normal / Frantic; they load
 
   Bigger Tips raises all prices by 20%.
 
+### Floor plans
+
+Each run picks one of three dining-room floor plans at random: **Classic** (two straight rows),
+**Staggered** (zig-zag tables, no straight runs for the Server) and **Cozy** (both rows pulled into
+the middle around one tight aisle). The kitchen, the pass, the queue and the exit aisle never move,
+so the Cook's job and every bot route stay the same; only the Server's floor changes. Tables open in
+reading order as waves grow. `?layout=COZY` forces one for testing.
+
 ### Tonight's Specials (run-to-run variety)
 
 From wave 3, every ordinary wave has a 50% chance of a random twist, rolled before the shop so the
@@ -266,7 +274,7 @@ src/
 └─ game/
    ├─ game.js                Phaser config (640×360, pixelArt, gamepad on, no gravity)
    ├─ constants.js           tile size, palette, tuning numbers
-   ├─ data/                  map.js (ASCII layout), recipes.js, waves.js, powerups.js
+   ├─ data/                  map.js (ASCII floor plans), recipes.js, waves.js, specials.js, powerups.js
    ├─ art/                   pixel-string sprites → generated textures (no binary assets)
    ├─ audio/sfx.js           tiny WebAudio synth (ding, sizzle, pop, error)
    ├─ input/PlayerInput.js   gamepad-first input with keyboard fallback + rumble
@@ -300,6 +308,7 @@ Godot → Phaser mapping used:
 - [x] 640×360 viewport, pixel art, pixel font
 - [x] Lobby: claim Cook/Server by pad (keyboard fallback)
 - [x] Map from ASCII: walls, kitchen, dining room, doorway, pass counters
+- [x] Three dining-room floor plans (Classic, Staggered, Cozy), one picked at random per run; `npm run check:layouts` (also run in CI) verifies every plan keeps the kitchen, queue and exit aisle intact and every table reachable
 - [x] Cook + Server controllers (analog, 8-dir), held-item slot over the head
 - [x] Stations: crates, boards (hold to chop), grills (cook → burn), counters, plate stack, sink, bin, tables
 - [x] Customers: queue → follow → seat → order → wait → eat → leave (angry on 0 patience)

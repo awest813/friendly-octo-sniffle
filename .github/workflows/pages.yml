@@ -29,6 +29,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run check:layouts
       - run: npm run build
       # Fails with a clear message if Pages isn't enabled for the repository.
       - uses: actions/configure-pages@v5

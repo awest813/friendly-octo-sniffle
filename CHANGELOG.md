@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+
+- **Floor plans:** each run picks one of three dining-room layouts at random: Classic, Staggered
+  (zig-zag tables) or Cozy (both rows pulled into the middle). The kitchen never changes.
+- `npm run check:layouts` checks every floor plan keeps the kitchen, queue and exit aisle intact
+  and every table reachable; CI runs it before building.
+
 ## 0.11.0
 
 - **Tonight's Specials:** from wave 3, about half the waves get a random twist: Happy Hour, Burger
